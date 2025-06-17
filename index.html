@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Otimizador de Currículo com IA v3</title>
+    <title>Otimizador de Currículo com IA v4</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- pdf.js and jspdf for PDF handling -->
@@ -26,10 +26,11 @@
         ::-webkit-scrollbar-thumb:hover { background: #555; }
         
         /* Styles for generated content */
-        .prose-output h1, .prose-output h2, .prose-output h3 { font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .prose-output h1, .prose-output h2, .prose-output h3, .prose-output h4 { font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; }
         .prose-output h1 { font-size: 1.5rem; }
         .prose-output h2 { font-size: 1.25rem; }
         .prose-output h3 { font-size: 1.1rem; }
+        .prose-output h4 { font-size: 1rem; color: #4a5568; }
         .prose-output ul { list-style-type: disc; margin-left: 1.5rem; }
         .prose-output li { margin-bottom: 0.25rem; }
         .prose-output p { margin-bottom: 0.5rem; }
@@ -104,13 +105,15 @@
                 
                 <!-- AI Assistant Features -->
                 <div id="aiFeatures" class="mt-6 pt-6 border-t border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Próximos Passos com IA</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <button id="analyzeButton" class="feature-btn" disabled>✨ Analisar Pontos Fortes</button>
-                        <button id="questionsButton" class="feature-btn" disabled>✨ Gerar Perguntas</button>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Assistente de Candidatura</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         <button id="coverLetterButton" class="feature-btn" disabled>✨ Rascunhar Carta</button>
                         <button id="linkedinButton" class="feature-btn" disabled>✨ Otimizar LinkedIn</button>
-                        <button id="followupButton" class="feature-btn md:col-span-2" disabled>✨ Gerar E-mail de Follow-up</button>
+                        <button id="analyzeButton" class="feature-btn" disabled>✨ Analisar Pontos Fortes</button>
+                        <button id="questionsButton" class="feature-btn" disabled>✨ Gerar Perguntas</button>
+                        <button id="pitchButton" class="feature-btn" disabled>✨ Gerar Pitch Pessoal</button>
+                        <button id="starButton" class="feature-btn" disabled>✨ Estruturar Experiências</button>
+                        <button id="followupButton" class="feature-btn md:col-span-2 lg:col-span-3" disabled>✨ Gerar E-mail de Follow-up</button>
                     </div>
                 </div>
             </div>
@@ -168,7 +171,9 @@
             questions: document.getElementById('questionsButton'),
             coverLetter: document.getElementById('coverLetterButton'),
             linkedin: document.getElementById('linkedinButton'),
-            followup: document.getElementById('followupButton')
+            followup: document.getElementById('followupButton'),
+            pitch: document.getElementById('pitchButton'),
+            star: document.getElementById('starButton'),
         };
         
         // --- State ---
@@ -180,7 +185,11 @@
         const disabledBtnClasses = "bg-gray-200 text-gray-500 cursor-not-allowed";
         
         Object.values(featureButtons).forEach(btn => {
-            btn.className = `${btn.className.includes('md:col-span-2') ? 'md:col-span-2 ' : ''}${baseBtnClasses} ${disabledBtnClasses}`;
+            let classList = btn.className;
+            let finalClasses = baseBtnClasses + ' ' + disabledBtnClasses;
+            if (classList.includes('md:col-span-2')) finalClasses = 'md:col-span-2 ' + finalClasses;
+            if (classList.includes('lg:col-span-3')) finalClasses = 'lg:col-span-3 ' + finalClasses;
+            btn.className = finalClasses;
         });
 
         // --- Event Listeners ---
@@ -190,12 +199,10 @@
         closeErrorModalButton.addEventListener('click', () => errorModal.classList.add('hidden'));
         closeContentModalButton.addEventListener('click', () => contentModal.classList.add('hidden'));
         
-        // [MODIFICADO] Adicionados listeners para os novos botões
-        featureButtons.analyze.addEventListener('click', (e) => handleFeatureClick(e.target, 'analyze'));
-        featureButtons.questions.addEventListener('click', (e) => handleFeatureClick(e.target, 'questions'));
-        featureButtons.coverLetter.addEventListener('click', (e) => handleFeatureClick(e.target, 'coverLetter'));
-        featureButtons.linkedin.addEventListener('click', (e) => handleFeatureClick(e.target, 'linkedin'));
-        featureButtons.followup.addEventListener('click', (e) => handleFeatureClick(e.target, 'followup'));
+        // [MODIFICADO] Adicionados listeners para todos os botões
+        Object.keys(featureButtons).forEach(key => {
+            featureButtons[key].addEventListener('click', (e) => handleFeatureClick(e.currentTarget, key));
+        });
 
         // --- Core Functions ---
 
@@ -249,6 +256,7 @@
         }
 
         async function handleFeatureClick(button, feature) {
+            if (button.disabled) return;
             toggleFeatureLoader(button, true);
             try {
                 const prompt = getPrompt(feature, optimizedMarkdown);
@@ -259,7 +267,9 @@
                     questions: "Sugestões para Entrevista",
                     coverLetter: "Rascunho da Carta de Apresentação",
                     linkedin: "Otimização para Perfil do LinkedIn",
-                    followup: "Rascunho de E-mail de Agradecimento"
+                    followup: "Rascunho de E-mail de Agradecimento",
+                    pitch: "Gerador de Pitch Pessoal",
+                    star: "Construtor de Histórias (Método STAR)"
                 };
                 showContentModal(titles[feature], result);
             } catch (error) {
@@ -388,27 +398,31 @@
         
         /**
          * [MODIFICADO] Selects and builds the correct prompt for the desired feature.
-         * Added new prompts for 'linkedin' and 'followup'.
+         * Added new prompts for 'pitch' and 'star'.
          */
         function getPrompt(type, markdown = '') {
             const jobDesc = jobDescriptionInput.value;
             const originalResume = resumeText;
             
-            const baseOptimizePrompt = `[Persona] Aja como um Estrategista de Carreira e Redator de Currículos especialista em otimização para ATS. [Contexto] Reescreva o currículo para maximizar a compatibilidade com a vaga, mantendo a legibilidade e o impacto. [Entradas] \nDescrição da Vaga: \n\`\`\`${jobDesc}\`\`\`\n\nTexto do Currículo Atual:\n\`\`\`${originalResume}\`\`\`\n\n[Instruções] Analise a vaga, identifique palavras-chave, e reescreva o currículo seção por seção (Resumo, Experiência, Competências), incorporando as palavras-chave de forma natural e priorizando conquistas quantificáveis. [Formato da Saída] Produza o currículo final em formato Markdown limpo e de coluna única. Use --- para criar uma linha horizontal de separação entre as seções principais. [Restrição CRÍTICA] O resultado DEVE começar diretamente com o primeiro elemento do currículo (o nome do candidato ou o primeiro título da seção). NÃO inclua nenhuma frase introdutória, comentário, ou qualquer texto que não seja parte do conteúdo do currículo.`;
+            const baseOptimizePrompt = `[Persona] Aja como um Estrategista de Carreira e Redator de Currículos especialista em otimização para ATS. [Contexto] Reescreva o currículo para maximizar a compatibilidade com a vaga. [Entradas] \nDescrição da Vaga: \n\`\`\`${jobDesc}\`\`\`\n\nTexto do Currículo Atual:\n\`\`\`${originalResume}\`\`\`\n\n[Instruções] Analise a vaga, identifique palavras-chave, e reescreva o currículo seção por seção. [Formato da Saída] Produza o currículo final em formato Markdown limpo e de coluna única. Use --- para separar seções. [Restrição CRÍTICA] O resultado DEVE começar diretamente com o conteúdo do currículo. NÃO inclua nenhuma frase introdutória ou comentário.`;
             
             switch (type) {
                 case 'optimize':
                     return baseOptimizePrompt;
                 case 'analyze':
-                    return `[Persona] Aja como um Coach de Carreira analítico. [Contexto] Você está analisando um currículo recém-otimizado contra a vaga desejada. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Forneça uma análise concisa em duas seções principais: "Pontos Fortes" e "Pontos a Melhorar". Seja construtivo e direto. [Formato da Saída] Use Markdown com cabeçalhos para cada seção.`;
+                    return `[Persona] Coach de Carreira analítico. [Contexto] Analisar currículo otimizado contra a vaga. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Forneça uma análise em duas seções: "Pontos Fortes" e "Pontos a Melhorar". Seja construtivo e direto. [Formato da Saída] Markdown com cabeçalhos.`;
                 case 'questions':
-                    return `[Persona] Aja como um Gerente de Contratação experiente. [Contexto] Você está preparando-se para uma entrevista. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo do Candidato (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Crie duas listas de perguntas: "Perguntas que o Entrevistador Pode Fazer" e "Perguntas Inteligentes para Você Fazer". [Formato da Saída] Use Markdown com cabeçalhos para cada lista.`;
+                    return `[Persona] Gerente de Contratação experiente. [Contexto] Preparar para entrevista. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo do Candidato (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Crie duas listas: "Perguntas que o Entrevistador Pode Fazer" e "Perguntas Inteligentes para Você Fazer". [Formato da Saída] Markdown com cabeçalhos.`;
                 case 'coverLetter':
-                    return `[Persona] Aja como um Redator Profissional. [Contexto] Você está escrevendo uma carta de apresentação concisa. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo do Candidato (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Escreva um rascunho de uma carta de apresentação profissional com três parágrafos curtos. Mantenha um tom profissional e confiante. [Formato da Saída] Texto puro ou Markdown simples.`;
+                    return `[Persona] Redator Profissional. [Contexto] Escrever uma carta de apresentação. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo do Candidato (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Escreva um rascunho de carta de apresentação profissional de 3 parágrafos. [Formato da Saída] Markdown.`;
                 case 'linkedin':
-                    return `[Persona] Aja como um Especialista em Marca Pessoal e otimização de LinkedIn. [Contexto] Otimizar um perfil do LinkedIn para atrair recrutadores. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Gere três seções para um perfil do LinkedIn: 1. 'Título Profissional (Headline)': Crie uma linha curta e impactante. 2. 'Seção "Sobre"': Elabore um texto em primeira pessoa (3-4 parágrafos) destacando paixão pela área, competências e conquistas. 3. 'Principais Competências': Liste as 10-15 habilidades mais importantes para destacar no perfil. [Formato da Saída] Use Markdown com cabeçalhos para cada seção.`;
+                    return `[Persona] Especialista em Marca Pessoal e LinkedIn. [Contexto] Otimizar um perfil do LinkedIn. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Gere 3 seções: 'Título Profissional (Headline)', 'Seção "Sobre"', e 'Principais Competências'. [Formato da Saída] Markdown com cabeçalhos.`;
                 case 'followup':
-                    return `[Persona] Aja como um Coach de Carreira especialista em comunicação pós-entrevista. [Contexto] Escrever um e-mail de agradecimento (follow-up) após uma entrevista. [Entradas]\nDescrição da Vaga (para contexto sobre a empresa e o cargo):\n\`\`\`${jobDesc}\`\`\`\n\n[Instruções] Crie um rascunho de e-mail de agradecimento. Use placeholders como '[Nome do Entrevistador]' e '[Seu Nome]'. O e-mail deve: 1. Ter um assunto claro (ex: "Agradecimento - Entrevista para [Nome do Cargo]"). 2. Agradecer pela oportunidade. 3. Reiterar o interesse na vaga e na empresa. 4. Mencionar brevemente um ponto positivo da conversa ou um destaque da sua qualificação. 5. Terminar com um encerramento profissional. [Formato da Saída] Texto formatado como um e-mail.`;
+                    return `[Persona] Coach de Carreira. [Contexto] Escrever e-mail de agradecimento pós-entrevista. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\n[Instruções] Crie um rascunho de e-mail de agradecimento. Use placeholders como '[Nome do Entrevistador]' e '[Seu Nome]'. O e-mail deve ter assunto claro, agradecer, reiterar interesse, e mencionar um ponto positivo da conversa. [Formato da Saída] Texto formatado como e-mail.`;
+                case 'pitch':
+                    return `[Persona] Coach de Carreira especialista em entrevistas. [Contexto] Criar um "pitch" para a pergunta "Fale sobre você". [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Crie um pitch pessoal de 3 parágrafos (máximo de 150 palavras). 1º parágrafo: Apresentação (profissão, anos de experiência). 2º parágrafo: Conecte suas habilidades e uma conquista chave do currículo aos requisitos da vaga. 3º parágrafo: Expresse entusiasmo pela vaga e o que espera alcançar. [Formato da Saída] Markdown.`;
+                case 'star':
+                    return `[Persona] Coach de Entrevistas Comportamentais. [Contexto] Estruturar experiências usando o método STAR (Situação, Tarefa, Ação, Resultado). [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Selecione as 2 experiências profissionais mais relevantes do currículo. Para cada uma, estruture-a no formato STAR: **Situação:** (O contexto/desafio), **Tarefa:** (Sua responsabilidade), **Ação:** (O que você fez), **Resultado:** (O impacto quantificado). [Formato da Saída] Markdown com cabeçalhos claros para cada história e para S, T, A, R.`;
                 default:
                     return '';
             }
@@ -437,9 +451,7 @@
                 btn.disabled = !isEnabled;
                 
                 let currentClasses = btn.className;
-                // Remove existing styling classes before adding new ones
                 currentClasses = currentClasses.replace(enabledBtnClasses, '').replace(disabledBtnClasses, '').trim();
-
                 btn.className = `${currentClasses} ${isEnabled ? enabledBtnClasses : disabledBtnClasses}`;
                 
                 if(isEnabled) {
