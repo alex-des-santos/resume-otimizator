@@ -105,14 +105,14 @@
                 
                 <!-- AI Assistant Features -->
                 <div id="aiFeatures" class="mt-6 pt-6 border-t border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Assistente de Candidatura</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Assistente de Candidatura</h3>                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         <button id="coverLetterButton" class="feature-btn" disabled>✨ Rascunhar Carta</button>
                         <button id="linkedinButton" class="feature-btn" disabled>✨ Otimizar LinkedIn</button>
                         <button id="analyzeButton" class="feature-btn" disabled>✨ Analisar Pontos Fortes</button>
                         <button id="questionsButton" class="feature-btn" disabled>✨ Gerar Perguntas</button>
                         <button id="pitchButton" class="feature-btn" disabled>✨ Gerar Pitch Pessoal</button>
                         <button id="starButton" class="feature-btn" disabled>✨ Estruturar Experiências</button>
+                        <button id="salaryButton" class="feature-btn" disabled>💰 Calcular Pretensão Salarial</button>
                         <button id="followupButton" class="feature-btn md:col-span-2 lg:col-span-3" disabled>✨ Gerar E-mail de Follow-up</button>
                     </div>
                 </div>
@@ -164,8 +164,7 @@
         const contentModalTitle = document.getElementById('contentModalTitle');
         const contentModalBody = document.getElementById('contentModalBody');
         const closeContentModalButton = document.getElementById('closeContentModalButton');
-        
-        // [MODIFICADO] Adicionados novos botões de features
+          // [MODIFICADO] Adicionados novos botões de features
         const featureButtons = {
             analyze: document.getElementById('analyzeButton'),
             questions: document.getElementById('questionsButton'),
@@ -174,6 +173,7 @@
             followup: document.getElementById('followupButton'),
             pitch: document.getElementById('pitchButton'),
             star: document.getElementById('starButton'),
+            salary: document.getElementById('salaryButton'),
         };
         
         // --- State ---
@@ -260,8 +260,7 @@
             toggleFeatureLoader(button, true);
             try {
                 const prompt = getPrompt(feature, optimizedMarkdown);
-                const result = await callGeminiAPI(prompt);
-                // [MODIFICADO] Adicionados títulos para as novas features
+                const result = await callGeminiAPI(prompt);                // [MODIFICADO] Adicionados títulos para as novas features
                 const titles = {
                     analyze: "Análise de Pontos Fortes e Fracos",
                     questions: "Sugestões para Entrevista",
@@ -269,7 +268,8 @@
                     linkedin: "Otimização para Perfil do LinkedIn",
                     followup: "Rascunho de E-mail de Agradecimento",
                     pitch: "Gerador de Pitch Pessoal",
-                    star: "Construtor de Histórias (Método STAR)"
+                    star: "Construtor de Histórias (Método STAR)",
+                    salary: "Análise de Pretensão Salarial"
                 };
                 showContentModal(titles[feature], result);
             } catch (error) {
@@ -420,9 +420,10 @@
                 case 'followup':
                     return `[Persona] Coach de Carreira. [Contexto] Escrever e-mail de agradecimento pós-entrevista. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\n[Instruções] Crie um rascunho de e-mail de agradecimento. Use placeholders como '[Nome do Entrevistador]' e '[Seu Nome]'. O e-mail deve ter assunto claro, agradecer, reiterar interesse, e mencionar um ponto positivo da conversa. [Formato da Saída] Texto formatado como e-mail.`;
                 case 'pitch':
-                    return `[Persona] Coach de Carreira especialista em entrevistas. [Contexto] Criar um "pitch" para a pergunta "Fale sobre você". [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Crie um pitch pessoal de 3 parágrafos (máximo de 150 palavras). 1º parágrafo: Apresentação (profissão, anos de experiência). 2º parágrafo: Conecte suas habilidades e uma conquista chave do currículo aos requisitos da vaga. 3º parágrafo: Expresse entusiasmo pela vaga e o que espera alcançar. [Formato da Saída] Markdown.`;
-                case 'star':
+                    return `[Persona] Coach de Carreira especialista em entrevistas. [Contexto] Criar um "pitch" para a pergunta "Fale sobre você". [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Crie um pitch pessoal de 3 parágrafos (máximo de 150 palavras). 1º parágrafo: Apresentação (profissão, anos de experiência). 2º parágrafo: Conecte suas habilidades e uma conquista chave do currículo aos requisitos da vaga. 3º parágrafo: Expresse entusiasmo pela vaga e o que espera alcançar. [Formato da Saída] Markdown.`;                case 'star':
                     return `[Persona] Coach de Entrevistas Comportamentais. [Contexto] Estruturar experiências usando o método STAR (Situação, Tarefa, Ação, Resultado). [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Selecione as 2 experiências profissionais mais relevantes do currículo. Para cada uma, estruture-a no formato STAR: **Situação:** (O contexto/desafio), **Tarefa:** (Sua responsabilidade), **Ação:** (O que você fez), **Resultado:** (O impacto quantificado). [Formato da Saída] Markdown com cabeçalhos claros para cada história e para S, T, A, R.`;
+                case 'salary':
+                    return `[Persona] Consultor de Remuneração e Analista de Mercado de Trabalho. [Contexto] Calcular pretensão salarial adequada para a vaga. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Analise o nível da vaga, responsabilidades, experiência exigida e as competências do candidato. Forneça uma faixa salarial (valor mínimo e máximo) em reais brasileiros, considerando o mercado atual. Inclua: 1) **Análise da Vaga:** Senioridade, setor e localização inferida; 2) **Análise do Perfil:** Experiência e competências do candidato; 3) **Faixa Salarial Sugerida:** Valor mínimo e máximo com justificativa; 4) **Dicas de Negociação:** Como apresentar a pretensão salarial. [Formato da Saída] Markdown com seções claras.`;
                 default:
                     return '';
             }
