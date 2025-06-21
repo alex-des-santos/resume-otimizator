@@ -74,9 +74,7 @@
                 <div class="mb-6">
                     <label for="jobDescription" class="block text-sm font-medium text-gray-700 mb-1">Descrição da Vaga</label>
                     <textarea id="jobDescription" rows="8" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Cole a descrição completa da vaga..."></textarea>
-                </div>
-
-                <div class="mb-6">
+                </div>                <div class="mb-6">
                     <label for="resumeFile" class="block text-sm font-medium text-gray-700 mb-1">Seu Currículo em PDF</label>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
                         <div class="space-y-1 text-center">
@@ -85,6 +83,12 @@
                             <p id="fileName" class="text-xs text-gray-500">Apenas PDF</p>
                         </div>
                     </div>
+                </div>
+
+                <div class="mb-6">
+                    <label for="pdfFileName" class="block text-sm font-medium text-gray-700 mb-1">Nome do Arquivo PDF (opcional)</label>
+                    <input type="text" id="pdfFileName" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Ex: curriculo-desenvolvedor-frontend">
+                    <p class="text-xs text-gray-500 mt-1">Se vazio, será gerado automaticamente baseado na vaga</p>
                 </div>
 
                 <button id="generateButton" class="w-full mt-auto bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300 ease-in-out flex items-center justify-center">
@@ -112,6 +116,7 @@
                         <button id="questionsButton" class="feature-btn" disabled>✨ Gerar Perguntas</button>
                         <button id="pitchButton" class="feature-btn" disabled>✨ Gerar Pitch Pessoal</button>
                         <button id="starButton" class="feature-btn" disabled>✨ Estruturar Experiências</button>
+                        <button id="summaryButton" class="feature-btn" disabled>📝 Resumo Qualificações</button>
                         <button id="salaryButton" class="feature-btn" disabled>💰 Calcular Pretensão Salarial</button>
                         <button id="followupButton" class="feature-btn md:col-span-2 lg:col-span-3" disabled>✨ Gerar E-mail de Follow-up</button>
                     </div>
@@ -143,11 +148,11 @@
         // --- Setup ---
         pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js`;
         const { jsPDF } = window.jspdf;
-        
-        // --- DOM Elements ---
+          // --- DOM Elements ---
         const apiKeyInput = document.getElementById('apiKey');
         const jobDescriptionInput = document.getElementById('jobDescription');
         const resumeFileInput = document.getElementById('resumeFile');
+        const pdfFileNameInput = document.getElementById('pdfFileName');
         const fileNameDisplay = document.getElementById('fileName');
         const generateButton = document.getElementById('generateButton');
         const downloadPdfButton = document.getElementById('downloadPdfButton');
@@ -163,8 +168,7 @@
         const contentModal = document.getElementById('contentModal');
         const contentModalTitle = document.getElementById('contentModalTitle');
         const contentModalBody = document.getElementById('contentModalBody');
-        const closeContentModalButton = document.getElementById('closeContentModalButton');
-          // [MODIFICADO] Adicionados novos botões de features
+        const closeContentModalButton = document.getElementById('closeContentModalButton');          // [MODIFICADO] Adicionados novos botões de features
         const featureButtons = {
             analyze: document.getElementById('analyzeButton'),
             questions: document.getElementById('questionsButton'),
@@ -173,6 +177,7 @@
             followup: document.getElementById('followupButton'),
             pitch: document.getElementById('pitchButton'),
             star: document.getElementById('starButton'),
+            summary: document.getElementById('summaryButton'),
             salary: document.getElementById('salaryButton'),
         };
         
@@ -269,6 +274,7 @@
                     followup: "Rascunho de E-mail de Agradecimento",
                     pitch: "Gerador de Pitch Pessoal",
                     star: "Construtor de Histórias (Método STAR)",
+                    summary: "Resumo de Qualificações Focado na Vaga",
                     salary: "Análise de Pretensão Salarial"
                 };
                 showContentModal(titles[feature], result);
@@ -313,11 +319,21 @@
                  throw new Error("A API não retornou uma resposta válida. A resposta pode estar bloqueada por políticas de segurança.");
             }
         }
-        
-        function downloadAsPdf() {
+          function downloadAsPdf() {
             if (!optimizedMarkdown) {
                 showError('Nenhum Conteúdo', 'Não há currículo gerado para baixar.');
                 return;
+            }
+
+            // Gerar nome do arquivo
+            let fileName = pdfFileNameInput.value.trim();
+            if (!fileName) {
+                fileName = generateFileNameFromJobDescription();
+            }
+            
+            // Garantir que termine com .pdf
+            if (!fileName.endsWith('.pdf')) {
+                fileName += '.pdf';
             }
 
             const doc = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
@@ -393,7 +409,7 @@
                 }
             });
 
-            doc.save('curriculo-otimizado.pdf');
+            doc.save(fileName);
         }
         
         /**
@@ -421,12 +437,62 @@
                     return `[Persona] Coach de Carreira. [Contexto] Escrever e-mail de agradecimento pós-entrevista. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\n[Instruções] Crie um rascunho de e-mail de agradecimento. Use placeholders como '[Nome do Entrevistador]' e '[Seu Nome]'. O e-mail deve ter assunto claro, agradecer, reiterar interesse, e mencionar um ponto positivo da conversa. [Formato da Saída] Texto formatado como e-mail.`;
                 case 'pitch':
                     return `[Persona] Coach de Carreira especialista em entrevistas. [Contexto] Criar um "pitch" para a pergunta "Fale sobre você". [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Crie um pitch pessoal de 3 parágrafos (máximo de 150 palavras). 1º parágrafo: Apresentação (profissão, anos de experiência). 2º parágrafo: Conecte suas habilidades e uma conquista chave do currículo aos requisitos da vaga. 3º parágrafo: Expresse entusiasmo pela vaga e o que espera alcançar. [Formato da Saída] Markdown.`;                case 'star':
-                    return `[Persona] Coach de Entrevistas Comportamentais. [Contexto] Estruturar experiências usando o método STAR (Situação, Tarefa, Ação, Resultado). [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Selecione as 2 experiências profissionais mais relevantes do currículo. Para cada uma, estruture-a no formato STAR: **Situação:** (O contexto/desafio), **Tarefa:** (Sua responsabilidade), **Ação:** (O que você fez), **Resultado:** (O impacto quantificado). [Formato da Saída] Markdown com cabeçalhos claros para cada história e para S, T, A, R.`;
-                case 'salary':
+                    return `[Persona] Coach de Entrevistas Comportamentais. [Contexto] Estruturar experiências usando o método STAR (Situação, Tarefa, Ação, Resultado). [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Selecione as 2 experiências profissionais mais relevantes do currículo. Para cada uma, estruture-a no formato STAR: **Situação:** (O contexto/desafio), **Tarefa:** (Sua responsabilidade), **Ação:** (O que você fez), **Resultado:** (O impacto quantificado). [Formato da Saída] Markdown com cabeçalhos claros para cada história e para S, T, A, R.`;                case 'salary':
                     return `[Persona] Consultor de Remuneração e Analista de Mercado de Trabalho. [Contexto] Calcular pretensão salarial adequada para a vaga. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Analise o nível da vaga, responsabilidades, experiência exigida e as competências do candidato. Forneça uma faixa salarial (valor mínimo e máximo) em reais brasileiros, considerando o mercado atual. Inclua: 1) **Análise da Vaga:** Senioridade, setor e localização inferida; 2) **Análise do Perfil:** Experiência e competências do candidato; 3) **Faixa Salarial Sugerida:** Valor mínimo e máximo com justificativa; 4) **Dicas de Negociação:** Como apresentar a pretensão salarial. [Formato da Saída] Markdown com seções claras.`;
+                case 'summary':
+                    return `[Persona] Redator Profissional especialista em currículos. [Contexto] Criar um resumo executivo de qualificações focado especificamente na vaga. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Crie um resumo executivo de 3-4 frases que destaque as qualificações mais relevantes do candidato para esta vaga específica. O resumo deve: 1) Mencionar anos de experiência na área relevante; 2) Destacar as 2-3 competências técnicas mais alinhadas com a vaga; 3) Incluir uma conquista quantificada que demonstre impacto; 4) Conectar diretamente o perfil aos requisitos da vaga. [Formato da Saída] Parágrafo único em Markdown, conciso e impactante, ideal para usar no topo do currículo.`;
                 default:
                     return '';
             }
+        }
+
+        
+        function generateFileNameFromJobDescription() {
+            const jobDesc = jobDescriptionInput.value.trim();
+            if (!jobDesc) {
+                return 'curriculo-otimizado';
+            }
+            
+            // Extrair palavras-chave relevantes da descrição da vaga
+            let fileName = jobDesc
+                .toLowerCase()
+                .replace(/[^\w\s-]/g, '') // Remove caracteres especiais
+                .replace(/\s+/g, '-') // Substitui espaços por hífens
+                .substring(0, 100); // Limita o tamanho
+            
+            // Tentar extrair cargo/posição se houver padrões comuns
+            const jobTitlePatterns = [
+                /vaga\s+(?:de|para)\s+([^.,:;]+)/i,
+                /contrata[çc]ão\s+(?:de|para)\s+([^.,:;]+)/i,
+                /busca(?:mos)?\s+([^.,:;]+)/i,
+                /desenvolvedor[a]?\s+([\w\s]+)/i,
+                /analista\s+([\w\s]+)/i,
+                /gerente\s+([\w\s]+)/i,
+                /coordenador[a]?\s+([\w\s]+)/i,
+                /especialista\s+([\w\s]+)/i,
+                /consultor[a]?\s+([\w\s]+)/i,
+                /engenheiro[a]?\s+([\w\s]+)/i
+            ];
+            
+            for (const pattern of jobTitlePatterns) {
+                const match = jobDesc.match(pattern);
+                if (match && match[1]) {
+                    const extractedTitle = match[1]
+                        .trim()
+                        .toLowerCase()
+                        .replace(/[^\w\s]/g, '')
+                        .replace(/\s+/g, '-')
+                        .substring(0, 50);
+                    
+                    if (extractedTitle.length > 3) {
+                        return `curriculo-${extractedTitle}`;
+                    }
+                }
+            }
+            
+            // Se não conseguir extrair um título específico, usar as primeiras palavras
+            const words = fileName.split('-').filter(word => word.length > 2).slice(0, 5);
+            return words.length > 0 ? `curriculo-${words.join('-')}` : 'curriculo-otimizado';
         }
 
         // --- UI Helper Functions ---
