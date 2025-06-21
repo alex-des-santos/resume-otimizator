@@ -34,5 +34,6 @@ Otimize seu currículo, prepare-se para entrevistas e fortaleça sua presença p
 MIT. Veja o arquivo [LICENSE](LICENSE).
 
 ---
+[Otimizador de Currículo](https://alex-des-santos.github.io/resume-otimizator/)
 
 Desenvolvido por Alexandre. Para dúvidas ou sugestões, abra uma issue ou entre em contato.
