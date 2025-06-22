@@ -402,8 +402,11 @@
         // Função para normalizar e validar markdown
         function normalizeMarkdown(markdown) {
             if (!markdown || typeof markdown !== 'string') {
+                console.log('Markdown inválido recebido:', typeof markdown);
                 return '';
             }
+            
+            console.log('Markdown original (primeiros 200 chars):', markdown.substring(0, 200));
             
             let normalized = markdown
                 // Normalizar quebras de linha
@@ -411,6 +414,11 @@
                 .replace(/\r/g, '\n')
                 // Remover espaços extras no início e fim
                 .trim()
+                // CORREÇÃO CRÍTICA: Remover blocos de código markdown que envolvem todo o conteúdo
+                .replace(/^```(?:markdown|text|md)?\s*\n([\s\S]*?)\n```$/m, '$1')
+                // Caso ainda restem blocos individuais, remover também
+                .replace(/^```markdown\s*\n/gm, '')
+                .replace(/^```\s*$/gm, '')
                 // Garantir espaçamento adequado ao redor de cabeçalhos
                 .replace(/\n(#{1,6}\s)/g, '\n\n$1')
                 .replace(/(#{1,6}\s[^\n]+)\n/g, '$1\n\n')
@@ -419,21 +427,26 @@
                 // Garantir espaçamento adequado ao redor de listas
                 .replace(/\n(\*\s|1\.\s)/g, '\n\n$1')
                 // Remover múltiplas quebras de linha consecutivas
-                .replace(/\n{3,}/g, '\n\n');
+                .replace(/\n{3,}/g, '\n\n')
+                // Remover possíveis espaços em branco extras no início após limpeza
+                .trim();
             
-            console.log('Markdown normalizado aplicado');
+            console.log('Markdown normalizado (primeiros 200 chars):', normalized.substring(0, 200));
+            console.log('Markdown normalizado aplicado (com limpeza de blocos de código)');
             return normalized;
         }
 
         // Função para processar markdown com fallback
         function processMarkdown(rawMarkdown) {
             try {
+                console.log('Iniciando processamento de markdown...');
                 const normalizedMarkdown = normalizeMarkdown(rawMarkdown);
                 
                 if (typeof marked === 'undefined') {
                     throw new Error('Marked.js não está disponível');
                 }
                 
+                console.log('Processando markdown com marked.js...');
                 const htmlContent = marked.parse(normalizedMarkdown);
                 
                 // Validar se o HTML foi gerado corretamente
@@ -441,6 +454,7 @@
                     throw new Error('HTML vazio gerado pelo marked.js');
                 }
                 
+                console.log('Markdown processado com sucesso');
                 return htmlContent;
                 
             } catch (error) {
