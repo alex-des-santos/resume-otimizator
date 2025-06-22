@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>">
     <!-- CSP mais permissivo para desenvolvimento, mas ainda seguro -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; connect-src 'self' https://generativelanguage.googleapis.com; img-src 'self' data: blob:; worker-src 'self' blob: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;">
     <title>Otimizador de Currículo com IA v6</title>
@@ -27,6 +29,13 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+        
+        /* Suprimir avisos de propriedades específicas do navegador */
+        html {
+            -webkit-text-size-adjust: 100%;
+            -moz-text-size-adjust: 100%; 
+        }
+        
         /* Custom scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -203,6 +212,18 @@
     <script type="module">
         // --- Setup ---
         pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js`;
+        
+        // Suprimir avisos de CSS específicos do navegador do Tailwind
+        const originalConsoleWarn = console.warn;
+        console.warn = function(...args) {
+            const message = args.join(' ');
+            if (message.includes('-webkit-text-size-adjust') || 
+                message.includes('-moz-osx-font-smoothing') ||
+                message.includes('Conjunto de regras ignorado devido a seletor incorreto')) {
+                return; // Suprimir estes avisos específicos
+            }
+            originalConsoleWarn.apply(console, args);
+        };
         
         // Verificação de integridade para recursos carregados dinamicamente
         const verifyResourceIntegrity = async (url, expectedHash) => {
