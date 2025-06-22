@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>Teste de Recursos</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md p-6">
+        <h1 class="text-2xl font-bold text-gray-900 mb-4">Teste de Recursos</h1>
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        // Teste dos recursos
+        const testResults = document.getElementById('test-results');
+        let results = [];
+
+        // Teste PDF.js
+        if (typeof pdfjsLib !== 'undefined') {
+            results.push('✅ PDF.js carregado com sucesso');
+        } else {
+            results.push('❌ PDF.js falhou ao carregar');
+        }
+
+        // Teste jsPDF
+        if (typeof window.jspdf !== 'undefined') {
+            results.push('✅ jsPDF carregado com sucesso');
+        } else {
+            results.push('❌ jsPDF falhou ao carregar');
+        }
+
+        // Teste Marked
+        if (typeof marked !== 'undefined') {
+            results.push('✅ Marked carregado com sucesso');
+        } else {
+            results.push('❌ Marked falhou ao carregar');
+        }
+
+        // Teste Tailwind CSS
+        const testElement = document.createElement('div');
+        testElement.className = 'bg-blue-500';
+        document.body.appendChild(testElement);
+        const computedStyle = window.getComputedStyle(testElement);
+        if (computedStyle.backgroundColor === 'rgb(59, 130, 246)') {
+            results.push('✅ Tailwind CSS carregado com sucesso');
+        } else {
+            results.push('❌ Tailwind CSS falhou ao carregar');
+        }
+        document.body.removeChild(testElement);
+
+        testResults.innerHTML = results.map(result => `<p class="mb-2">${result}</p>`).join('');
+    </script>
+</body>
+</html>

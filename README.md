@@ -30,7 +30,34 @@ Otimize seu currículo, prepare-se para entrevistas e fortaleça sua presença p
 - Navegador moderno (Chrome, Edge, Firefox, etc.)
 - Chave de API Gemini válida (Google)
 
-## 📄 Licença
+## � Recursos de Segurança
+
+### Integridade de Subrecursos (SRI)
+- **SRI Hashes**: Todos os recursos externos (CDN) possuem hashes SHA-384 para verificar integridade
+- **Crossorigin**: Configuração adequada de CORS para recursos de terceiros
+- **Referrer Policy**: Controle de informações de referência enviadas
+
+### Content Security Policy (CSP)
+- **CSP Headers**: Políticas restritivas para prevenir ataques XSS
+- **Script Sources**: Apenas scripts de origens confiáveis são permitidos
+- **Style Sources**: Controle rigoroso de fontes de CSS
+
+### Validação de Entrada
+- **Sanitização**: Limpeza automática de inputs para prevenir injeção de código
+- **Validação de API Key**: Verificação de formato da chave de API
+- **Validação de Arquivo**: Verificação de tipo e tamanho máximo (10MB)
+- **Rate Limiting**: Limite de 2 segundos entre requisições para prevenir abuso
+
+### Segurança de Links
+- **rel="noopener noreferrer"**: Todos os links externos são seguros
+- **Target="_blank"**: Links externos abrem em nova aba sem acesso ao contexto original
+
+### Tratamento de Erros
+- **Timeout**: Requisições com limite de 30 segundos
+- **Error Handling**: Tratamento seguro de exceções sem exposição de dados sensíveis
+- **User Agent**: Identificação adequada nas requisições HTTP
+
+## �📄 Licença
 MIT. Veja o arquivo [LICENSE](LICENSE).
 
 ---

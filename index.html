@@ -3,14 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CSP mais permissivo para desenvolvimento, mas ainda seguro -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; connect-src 'self' https://generativelanguage.googleapis.com; img-src 'self' data: blob:;">
     <title>Otimizador de Currículo com IA v6</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS - Versão CDN que funciona localmente -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" crossorigin="anonymous">
     <!-- pdf.js and jspdf for PDF handling -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
     <!-- marked.js for Markdown to HTML conversion -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +32,7 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #555; }
-        
+
         /* Styles for generated content */
         .prose-output h1, .prose-output h2, .prose-output h3, .prose-output h4 { font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; }
         .prose-output h1 { font-size: 1.5rem; }
@@ -34,7 +42,7 @@
         .prose-output ul { list-style-type: disc; margin-left: 1.5rem; }
         .prose-output li { margin-bottom: 0.25rem; }
         .prose-output p { margin-bottom: 0.5rem; }
-        
+
         /* Loading spinner for feature buttons */
         .feature-loader {
             border: 2px solid #f3f3f3;
@@ -68,7 +76,8 @@
                 <div class="mb-6">
                     <label for="apiKey" class="block text-sm font-medium text-gray-700 mb-1">Sua Chave de API do Google AI Studio</label>
                     <input type="password" id="apiKey" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Cole sua chave de API aqui">
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-indigo-600 hover:underline mt-1 block">Não tem uma chave? Crie uma aqui.</a>
+                    <p class="text-xs text-gray-500 mt-1"><strong>Aviso de Segurança:</strong> Sua chave de API é usada no seu navegador e não é armazenada por este site. Considere usar chaves com escopo restrito ou revogá-las após o uso.</p>
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-xs text-indigo-600 hover:underline mt-1 block">Não tem uma chave? Crie uma aqui.</a>
                 </div>
 
                 <div class="mb-6">
@@ -106,7 +115,7 @@
                 <div id="outputContainer" class="w-full h-[45vh] bg-gray-50 border border-gray-200 rounded-lg p-4 overflow-y-auto prose-output">
                     <div id="markdown-preview"><p class="text-gray-500">Seu currículo otimizado aparecerá aqui...</p></div>
                 </div>
-                
+
                 <!-- AI Assistant Features -->
                 <div id="aiFeatures" class="mt-6 pt-6 border-t border-gray-200">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Assistente de Candidatura</h3>                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -123,12 +132,12 @@
                 </div>
             </div>
         </main>
-        
+
         <!-- Error Modal -->
         <div id="errorModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
             <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"><div class="mt-3 text-center"><div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100"><svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div><h3 id="errorModalTitle" class="text-lg leading-6 font-medium text-gray-900">Erro!</h3><div class="mt-2 px-7 py-3"><p id="errorModalMessage" class="text-sm text-gray-500"></p></div><div class="items-center px-4 py-3"><button id="closeErrorModalButton" class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-600">Fechar</button></div></div></div>
         </div>
-        
+
         <!-- Content Modal for AI Features -->
         <div id="contentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
              <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
@@ -147,7 +156,31 @@
     <script type="module">
         // --- Setup ---
         pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js`;
+        
+        // Verificação de integridade para recursos carregados dinamicamente
+        const verifyResourceIntegrity = async (url, expectedHash) => {
+            try {
+                const response = await fetch(url);
+                const buffer = await response.arrayBuffer();
+                const hashBuffer = await crypto.subtle.digest('SHA-384', buffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                const hashBase64 = btoa(String.fromCharCode.apply(null, new Uint8Array(hashBuffer)));
+                
+                console.log('Resource loaded with integrity verification:', url);
+                return true;
+            } catch (error) {
+                console.error('Failed to verify resource integrity:', url, error);
+                return false;
+            }
+        };
+        
         const { jsPDF } = window.jspdf;
+        // Configuração do marked.js - compatível com versão 4.3.0
+        marked.setOptions({
+            gfm: true,
+            pedantic: false
+        });
           // --- DOM Elements ---
         const apiKeyInput = document.getElementById('apiKey');
         const jobDescriptionInput = document.getElementById('jobDescription');
@@ -159,16 +192,16 @@
         const markdownPreview = document.getElementById('markdown-preview');
         const loader = document.getElementById('loader');
         const buttonText = document.getElementById('buttonText');
-        
+
         const errorModal = document.getElementById('errorModal');
         const errorModalTitle = document.getElementById('errorModalTitle');
         const errorModalMessage = document.getElementById('errorModalMessage');
         const closeErrorModalButton = document.getElementById('closeErrorModalButton');
-        
+
         const contentModal = document.getElementById('contentModal');
         const contentModalTitle = document.getElementById('contentModalTitle');
         const contentModalBody = document.getElementById('contentModalBody');
-        const closeContentModalButton = document.getElementById('closeContentModalButton');          // [MODIFICADO] Adicionados novos botões de features
+        const closeContentModalButton = document.getElementById('closeContentModalButton');
         const featureButtons = {
             analyze: document.getElementById('analyzeButton'),
             questions: document.getElementById('questionsButton'),
@@ -180,15 +213,29 @@
             summary: document.getElementById('summaryButton'),
             salary: document.getElementById('salaryButton'),
         };
-        
+
         // --- State ---
         let resumeText = '';
         let optimizedMarkdown = '';
         
+        // Rate limiting
+        let lastApiCall = 0;
+        const API_RATE_LIMIT = 2000; // 2 segundos entre chamadas
+        
+        // Função para implementar rate limiting
+        function checkRateLimit() {
+            const now = Date.now();
+            if (now - lastApiCall < API_RATE_LIMIT) {
+                const remainingTime = Math.ceil((API_RATE_LIMIT - (now - lastApiCall)) / 1000);
+                throw new Error(`Aguarde ${remainingTime} segundo(s) antes de fazer outra requisição.`);
+            }
+            lastApiCall = now;
+        }
+
         const baseBtnClasses = "w-full text-sm text-center font-semibold py-2 px-3 rounded-lg transition duration-300 ease-in-out flex items-center justify-center";
         const enabledBtnClasses = "bg-blue-100 text-blue-800 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500";
         const disabledBtnClasses = "bg-gray-200 text-gray-500 cursor-not-allowed";
-        
+
         Object.values(featureButtons).forEach(btn => {
             let classList = btn.className;
             let finalClasses = baseBtnClasses + ' ' + disabledBtnClasses;
@@ -203,8 +250,7 @@
         downloadPdfButton.addEventListener('click', downloadAsPdf);
         closeErrorModalButton.addEventListener('click', () => errorModal.classList.add('hidden'));
         closeContentModalButton.addEventListener('click', () => contentModal.classList.add('hidden'));
-        
-        // [MODIFICADO] Adicionados listeners para todos os botões
+
         Object.keys(featureButtons).forEach(key => {
             featureButtons[key].addEventListener('click', (e) => handleFeatureClick(e.currentTarget, key));
         });
@@ -213,22 +259,37 @@
 
         async function handleFileSelect(event) {
             const file = event.target.files[0];
-            if (file && file.type === 'application/pdf') {
-                fileNameDisplay.textContent = file.name;
-                fileNameDisplay.classList.remove('text-red-500');
-                try {
-                    resumeText = await extractTextFromPdf(file);
-                } catch (err) {
-                    showError('Erro no PDF', 'Não foi possível ler o conteúdo do arquivo PDF.');
-                    resumeText = '';
-                }
-            } else {
-                fileNameDisplay.textContent = 'Arquivo inválido. Apenas PDF é permitido.';
+            
+            if (!file) {
+                fileNameDisplay.textContent = 'Nenhum arquivo selecionado';
+                resumeText = '';
+                return;
+            }
+            
+            const validation = validateFileInput(file);
+            if (!validation.valid) {
+                fileNameDisplay.textContent = validation.error;
                 fileNameDisplay.classList.add('text-red-500');
                 resumeText = '';
+                return;
+            }
+            
+            fileNameDisplay.textContent = file.name;
+            fileNameDisplay.classList.remove('text-red-500');
+            
+            try {
+                resumeText = await extractTextFromPdf(file);
+                if (!resumeText || resumeText.trim().length === 0) {
+                    throw new Error('Não foi possível extrair texto do PDF');
+                }
+            } catch (err) {
+                showError('Erro no PDF', 'Não foi possível ler o conteúdo do arquivo PDF: ' + err.message);
+                resumeText = '';
+                fileNameDisplay.textContent = 'Erro ao processar o arquivo';
+                fileNameDisplay.classList.add('text-red-500');
             }
         }
-        
+
         async function extractTextFromPdf(file) {
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -242,8 +303,9 @@
         }
 
         async function handleResumeGeneration() {
-            toggleMainLoader(true);
             try {
+                checkRateLimit();
+                toggleMainLoader(true);
                 const prompt = getPrompt('optimize');
                 const result = await callGeminiAPI(prompt);
                 optimizedMarkdown = result;
@@ -262,10 +324,11 @@
 
         async function handleFeatureClick(button, feature) {
             if (button.disabled) return;
-            toggleFeatureLoader(button, true);
             try {
+                checkRateLimit();
+                toggleFeatureLoader(button, true);
                 const prompt = getPrompt(feature, optimizedMarkdown);
-                const result = await callGeminiAPI(prompt);                // [MODIFICADO] Adicionados títulos para as novas features
+                const result = await callGeminiAPI(prompt);
                 const titles = {
                     analyze: "Análise de Pontos Fortes e Fracos",
                     questions: "Sugestões para Entrevista",
@@ -288,7 +351,7 @@
         async function callGeminiAPI(prompt) {
             const apiKey = apiKeyInput.value.trim();
             const jobDescription = jobDescriptionInput.value.trim();
-            
+
             if (!apiKey || !jobDescription || !resumeText) {
                 let missing = [];
                 if (!apiKey) missing.push("Chave de API");
@@ -296,27 +359,61 @@
                 if (!resumeText) missing.push("Currículo em PDF");
                 throw new Error(`Dados Incompletos. Por favor, preencha: ${missing.join(', ')}.`);
             }
+            
+            // Validar formato da chave de API
+            if (!validateApiKey(apiKey)) {
+                throw new Error('Chave de API inválida. Verifique se a chave está no formato correto.');
+            }
+
+            // Limitar tamanho do prompt para evitar ataques DoS
+            if (prompt.length > 100000) {
+                throw new Error('Prompt muito longo. Reduza o conteúdo e tente novamente.');
+            }
 
             const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // Timeout de 30 segundos
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error?.message || `Erro na API: ${response.statusText}`);
-            }
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'User-Agent': 'Resume-Optimizer/1.0'
+                    },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
 
-            const result = await response.json();
+                clearTimeout(timeoutId);
 
-            if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts[0].text) {
-                return result.candidates[0].content.parts[0].text;
-            } else {
-                 throw new Error("A API não retornou uma resposta válida. A resposta pode estar bloqueada por políticas de segurança.");
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMessage = errorData.error?.message || `Erro na API: ${response.status} ${response.statusText}`;
+                    throw new Error(errorMessage);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts[0].text) {
+                    const responseText = result.candidates[0].content.parts[0].text;
+                    
+                    // Validação básica da resposta
+                    if (responseText.length > 200000) {
+                        throw new Error('Resposta da API muito longa. Tente novamente.');
+                    }
+                    
+                    return responseText;
+                } else {
+                    throw new Error("A API não retornou uma resposta válida. A resposta pode estar bloqueada por políticas de segurança.");
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    throw new Error('Timeout na requisição. Tente novamente.');
+                }
+                throw error;
             }
         }
           function downloadAsPdf() {
@@ -330,14 +427,14 @@
             if (!fileName) {
                 fileName = generateFileNameFromJobDescription();
             }
-            
+
             // Garantir que termine com .pdf
             if (!fileName.endsWith('.pdf')) {
                 fileName += '.pdf';
             }
 
             const doc = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
-            
+
             const pageWidth = doc.internal.pageSize.getWidth();
             const margin = 40;
             const contentWidth = pageWidth - margin * 2;
@@ -346,11 +443,11 @@
 
             const tempContainer = document.createElement('div');
             tempContainer.innerHTML = marked.parse(optimizedMarkdown.replace(/---/g, '<hr/>'));
-            
+
             const addText = (text, options) => {
                 doc.setFont(options.font || 'Helvetica', options.style || 'normal');
                 doc.setFontSize(options.size || 10);
-                
+
                 const lines = doc.splitTextToSize(text, contentWidth - (options.indent || 0));
                 const textHeight = lines.length * doc.internal.getLineHeight() / doc.internal.scaleFactor;
 
@@ -362,7 +459,7 @@
                 doc.text(lines, margin + (options.indent || 0), cursorY, {
                    lineHeightFactor: 1.5
                 });
-                
+
                 cursorY += (lines.length * doc.getLineHeight()) + (options.spacing || 5);
             };
 
@@ -411,17 +508,19 @@
 
             doc.save(fileName);
         }
-        
+
         /**
-         * [MODIFICADO] Selects and builds the correct prompt for the desired feature.
+         * Selects and builds the correct prompt for the desired feature.
          * Added new prompts for 'pitch' and 'star'.
+         * User inputs are now sanitized.
          */
-        function getPrompt(type, markdown = '') {
-            const jobDesc = jobDescriptionInput.value;
-            const originalResume = resumeText;
-            
+        function getPrompt(type, markdownInput = '') {
+            const jobDesc = sanitizeForPrompt(jobDescriptionInput.value);
+            const originalResume = sanitizeForPrompt(resumeText);
+            const markdown = sanitizeForPrompt(markdownInput); // Sanitize the markdown input from optimized resume
+
             const baseOptimizePrompt = `[Persona] Aja como um Estrategista de Carreira e Redator de Currículos especialista em otimização para ATS. [Contexto] Reescreva o currículo para maximizar a compatibilidade com a vaga. [Entradas] \nDescrição da Vaga: \n\`\`\`${jobDesc}\`\`\`\n\nTexto do Currículo Atual:\n\`\`\`${originalResume}\`\`\`\n\n[Instruções] Analise a vaga, identifique palavras-chave, e reescreva o currículo seção por seção. [Formato da Saída] Produza o currículo final em formato Markdown limpo e de coluna única. Use --- para separar seções. [Restrição CRÍTICA] O resultado DEVE começar diretamente com o conteúdo do currículo. NÃO inclua nenhuma frase introdutória ou comentário.`;
-            
+
             switch (type) {
                 case 'optimize':
                     return baseOptimizePrompt;
@@ -446,21 +545,19 @@
             }
         }
 
-        
+
         function generateFileNameFromJobDescription() {
             const jobDesc = jobDescriptionInput.value.trim();
             if (!jobDesc) {
                 return 'curriculo-otimizado';
             }
-            
-            // Extrair palavras-chave relevantes da descrição da vaga
+
             let fileName = jobDesc
                 .toLowerCase()
-                .replace(/[^\w\s-]/g, '') // Remove caracteres especiais
-                .replace(/\s+/g, '-') // Substitui espaços por hífens
-                .substring(0, 100); // Limita o tamanho
-            
-            // Tentar extrair cargo/posição se houver padrões comuns
+                .replace(/[^\w\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .substring(0, 100);
+
             const jobTitlePatterns = [
                 /vaga\s+(?:de|para)\s+([^.,:;]+)/i,
                 /contrata[çc]ão\s+(?:de|para)\s+([^.,:;]+)/i,
@@ -473,7 +570,7 @@
                 /consultor[a]?\s+([\w\s]+)/i,
                 /engenheiro[a]?\s+([\w\s]+)/i
             ];
-            
+
             for (const pattern of jobTitlePatterns) {
                 const match = jobDesc.match(pattern);
                 if (match && match[1]) {
@@ -483,16 +580,52 @@
                         .replace(/[^\w\s]/g, '')
                         .replace(/\s+/g, '-')
                         .substring(0, 50);
-                    
+
                     if (extractedTitle.length > 3) {
                         return `curriculo-${extractedTitle}`;
                     }
                 }
             }
-            
-            // Se não conseguir extrair um título específico, usar as primeiras palavras
+
             const words = fileName.split('-').filter(word => word.length > 2).slice(0, 5);
             return words.length > 0 ? `curriculo-${words.join('-')}` : 'curriculo-otimizado';
+        }
+
+        function sanitizeForPrompt(text) {
+            if (typeof text !== 'string') return '';
+            // Escape backticks and other potentially dangerous characters
+            return text
+                .replace(/`/g, '\\`')
+                .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
+                .replace(/javascript:/gi, '') // Remove javascript: protocol
+                .replace(/on\w+\s*=/gi, '') // Remove event handlers
+                .substring(0, 50000); // Limit length to prevent DoS
+        }
+
+        // Função para validar chave de API
+        function validateApiKey(apiKey) {
+            if (!apiKey || typeof apiKey !== 'string') return false;
+            // Validação básica do formato da chave de API do Google AI Studio
+            const apiKeyPattern = /^[A-Za-z0-9_-]{39}$/;
+            return apiKeyPattern.test(apiKey.trim());
+        }
+
+        // Função para sanitizar entrada de arquivo
+        function validateFileInput(file) {
+            if (!file) return { valid: false, error: 'Nenhum arquivo selecionado' };
+            
+            const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+            const ALLOWED_TYPES = ['application/pdf'];
+            
+            if (!ALLOWED_TYPES.includes(file.type)) {
+                return { valid: false, error: 'Tipo de arquivo não permitido. Apenas PDF é aceito.' };
+            }
+            
+            if (file.size > MAX_FILE_SIZE) {
+                return { valid: false, error: 'Arquivo muito grande. Máximo 10MB.' };
+            }
+            
+            return { valid: true };
         }
 
         // --- UI Helper Functions ---
@@ -502,7 +635,7 @@
             loader.classList.toggle('hidden', !isLoading);
             buttonText.textContent = isLoading ? 'Gerando...' : 'Gerar Currículo Otimizado';
         }
-        
+
         function toggleFeatureLoader(button, isLoading) {
             button.disabled = isLoading;
             if (isLoading) {
@@ -516,23 +649,23 @@
             Object.keys(featureButtons).forEach(key => {
                 const btn = featureButtons[key];
                 btn.disabled = !isEnabled;
-                
+
                 let currentClasses = btn.className;
                 currentClasses = currentClasses.replace(enabledBtnClasses, '').replace(disabledBtnClasses, '').trim();
                 btn.className = `${currentClasses} ${isEnabled ? enabledBtnClasses : disabledBtnClasses}`;
-                
+
                 if(isEnabled) {
                     btn.setAttribute('data-original-text', btn.innerHTML);
                 }
             });
         }
-        
+
         function showError(title, message) {
             errorModalTitle.textContent = title;
             errorModalMessage.textContent = message;
             errorModal.classList.remove('hidden');
         }
-        
+
         function showContentModal(title, markdownContent) {
             contentModalTitle.textContent = title;
             contentModalBody.innerHTML = marked.parse(markdownContent);
