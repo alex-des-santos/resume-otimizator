@@ -43,14 +43,102 @@
         ::-webkit-scrollbar-thumb:hover { background: #555; }
 
         /* Styles for generated content */
-        .prose-output h1, .prose-output h2, .prose-output h3, .prose-output h4 { font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; }
-        .prose-output h1 { font-size: 1.5rem; }
-        .prose-output h2 { font-size: 1.25rem; }
-        .prose-output h3 { font-size: 1.1rem; }
-        .prose-output h4 { font-size: 1rem; color: #4a5568; }
-        .prose-output ul { list-style-type: disc; margin-left: 1.5rem; }
-        .prose-output li { margin-bottom: 0.25rem; }
-        .prose-output p { margin-bottom: 0.5rem; }
+        .prose-output {
+            line-height: 1.6;
+            color: #2d3748;
+        }
+        
+        .prose-output h1, .prose-output h2, .prose-output h3, .prose-output h4 { 
+            font-weight: bold; 
+            margin-top: 1.5rem; 
+            margin-bottom: 0.75rem; 
+            color: #1a202c;
+        }
+        .prose-output h1 { 
+            font-size: 1.875rem; 
+            border-bottom: 2px solid #e2e8f0; 
+            padding-bottom: 0.5rem;
+        }
+        .prose-output h2 { 
+            font-size: 1.5rem; 
+            color: #2d3748;
+        }
+        .prose-output h3 { 
+            font-size: 1.25rem; 
+            color: #4a5568;
+        }
+        .prose-output h4 { 
+            font-size: 1.125rem; 
+            color: #4a5568; 
+        }
+        
+        .prose-output p { 
+            margin-bottom: 1rem; 
+            text-align: justify;
+        }
+        
+        .prose-output ul { 
+            list-style-type: disc; 
+            margin-left: 2rem; 
+            margin-bottom: 1rem;
+        }
+        .prose-output ol { 
+            list-style-type: decimal; 
+            margin-left: 2rem; 
+            margin-bottom: 1rem;
+        }
+        .prose-output li { 
+            margin-bottom: 0.5rem; 
+            line-height: 1.5;
+        }
+        
+        .prose-output strong { 
+            font-weight: 600; 
+            color: #1a202c;
+        }
+        .prose-output em { 
+            font-style: italic; 
+            color: #4a5568;
+        }
+        
+        .prose-output hr {
+            border: none;
+            height: 2px;
+            background: linear-gradient(to right, #cbd5e0, #e2e8f0, #cbd5e0);
+            margin: 2rem 0;
+        }
+        
+        .prose-output blockquote {
+            border-left: 4px solid #4299e1;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            font-style: italic;
+            color: #4a5568;
+        }
+        
+        .prose-output code {
+            background-color: #f7fafc;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+        
+        .prose-output pre {
+            background-color: #f7fafc;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        .prose-output a {
+            color: #4299e1;
+            text-decoration: underline;
+        }
+        .prose-output a:hover {
+            color: #3182ce;
+        }
 
         /* Loading spinner for feature buttons */
         .feature-loader {
@@ -244,11 +332,36 @@
         };
         
         const { jsPDF } = window.jspdf;
+        
+        // Verificar se todas as bibliotecas estão carregadas
+        const checkLibraries = () => {
+            const libraries = [
+                { name: 'PDF.js', check: () => typeof pdfjsLib !== 'undefined' },
+                { name: 'jsPDF', check: () => typeof jsPDF !== 'undefined' },
+                { name: 'marked.js', check: () => typeof marked !== 'undefined' }
+            ];
+            
+            const missing = libraries.filter(lib => !lib.check());
+            if (missing.length > 0) {
+                console.warn('Bibliotecas não carregadas:', missing.map(lib => lib.name).join(', '));
+                showError('Erro de Carregamento', `Algumas bibliotecas não foram carregadas corretamente: ${missing.map(lib => lib.name).join(', ')}`);
+                return false;
+            }
+            return true;
+        };
+        
         // Configuração do marked.js - compatível com versão 4.3.0
-        marked.setOptions({
-            gfm: true,
-            pedantic: false
-        });
+        if (typeof marked !== 'undefined') {
+            marked.setOptions({
+                gfm: true,
+                pedantic: false,
+                breaks: true,
+                sanitize: false
+            });
+        }
+        
+        // Verificar bibliotecas após um pequeno delay
+        setTimeout(checkLibraries, 1000);
           // --- DOM Elements ---
         const apiKeyInput = document.getElementById('apiKey');
         const jobDescriptionInput = document.getElementById('jobDescription');
@@ -388,7 +501,16 @@
                 const prompt = getPrompt('optimize');
                 const result = await callGeminiAPI(prompt);
                 optimizedMarkdown = result;
-                markdownPreview.innerHTML = marked.parse(optimizedMarkdown);
+                
+                // Garantir que o marked.js foi carregado
+                if (typeof marked === 'undefined') {
+                    throw new Error('Biblioteca marked.js não foi carregada corretamente');
+                }
+                
+                // Processar o markdown e aplicar formatação
+                const htmlContent = marked.parse(optimizedMarkdown);
+                markdownPreview.innerHTML = htmlContent;
+                
                 downloadPdfButton.disabled = false;
                 enableFeatureButtons(true);
             } catch (error) {
@@ -756,7 +878,22 @@
 
         function showContentModal(title, markdownContent) {
             contentModalTitle.textContent = title;
-            contentModalBody.innerHTML = marked.parse(markdownContent);
+            
+            // Garantir que o marked.js está disponível
+            if (typeof marked === 'undefined') {
+                contentModalBody.innerHTML = `<p class="text-red-500">Erro: Biblioteca de formatação não carregada.</p>`;
+                return;
+            }
+            
+            // Processar o markdown
+            try {
+                const htmlContent = marked.parse(markdownContent);
+                contentModalBody.innerHTML = htmlContent;
+            } catch (error) {
+                console.error('Erro ao processar markdown:', error);
+                contentModalBody.innerHTML = `<pre class="whitespace-pre-wrap">${markdownContent}</pre>`;
+            }
+            
             contentModal.classList.remove('hidden');
         }
     </script>
