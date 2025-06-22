@@ -755,39 +755,52 @@
             let cursorY = margin;
             doc.setFont('Helvetica', 'normal');
 
+            // Processar o markdown da mesma forma que na visualização
+            const processedMarkdown = processMarkdown(optimizedMarkdown);
             const tempContainer = document.createElement('div');
-            tempContainer.innerHTML = marked.parse(optimizedMarkdown.replace(/---/g, '<hr/>'));
+            tempContainer.innerHTML = processedMarkdown;
 
-            const addText = (text, options) => {
+            const addText = (text, options = {}) => {
+                if (!text || text.trim() === '') return;
+                
                 doc.setFont(options.font || 'Helvetica', options.style || 'normal');
                 doc.setFontSize(options.size || 10);
 
                 const lines = doc.splitTextToSize(text, contentWidth - (options.indent || 0));
-                const textHeight = lines.length * doc.internal.getLineHeight() / doc.internal.scaleFactor;
+                const lineHeight = doc.internal.getLineHeight() / doc.internal.scaleFactor;
+                const textHeight = lines.length * lineHeight;
 
+                // Verificar se há espaço na página
                 if (cursorY + textHeight > doc.internal.pageSize.getHeight() - margin) {
                     doc.addPage();
                     cursorY = margin;
                 }
 
-                doc.text(lines, margin + (options.indent || 0), cursorY, {
-                   lineHeightFactor: 1.5
-                });
-
-                cursorY += (lines.length * doc.getLineHeight()) + (options.spacing || 5);
+                doc.text(lines, margin + (options.indent || 0), cursorY);
+                cursorY += textHeight + (options.spacing || 5);
             };
 
-            const elements = Array.from(tempContainer.childNodes);
+            const addSeparator = () => {
+                if (cursorY + 15 > doc.internal.pageSize.getHeight() - margin) {
+                    doc.addPage();
+                    cursorY = margin;
+                }
+                doc.setDrawColor(180, 180, 180);
+                doc.setLineWidth(0.5);
+                doc.line(margin, cursorY, pageWidth - margin, cursorY);
+                cursorY += 15;
+            };
 
-            elements.forEach(el => {
-                const tagName = el.tagName || '';
-                const textContent = (el.textContent || '').trim();
+            // Processar elementos do DOM
+            const processElement = (element) => {
+                const tagName = element.tagName;
+                const textContent = element.textContent.trim();
 
-                if(!textContent && tagName !== 'HR') return;
+                if (!textContent && tagName !== 'HR') return;
 
                 switch(tagName) {
                     case 'H1':
-                        addText(textContent, { size: 18, style: 'bold', spacing: 12 });
+                        addText(textContent, { size: 16, style: 'bold', spacing: 12 });
                         break;
                     case 'H2':
                         addText(textContent, { size: 14, style: 'bold', spacing: 10 });
@@ -795,30 +808,51 @@
                     case 'H3':
                         addText(textContent, { size: 12, style: 'bold', spacing: 8 });
                         break;
+                    case 'H4':
+                        addText(textContent, { size: 11, style: 'bold', spacing: 6 });
+                        break;
                     case 'P':
-                        addText(textContent, { size: 10, style: 'normal', spacing: 8 });
+                        // Verificar se o parágrafo contém elementos em negrito
+                        const strongElements = element.querySelectorAll('strong');
+                        if (strongElements.length > 0) {
+                            addText(textContent, { size: 10, style: 'bold', spacing: 6 });
+                        } else {
+                            addText(textContent, { size: 10, style: 'normal', spacing: 6 });
+                        }
                         break;
                     case 'UL':
-                        Array.from(el.getElementsByTagName('li')).forEach(li => {
-                            addText(`• ${li.textContent.trim()}`, { size: 10, indent: 15, spacing: 4 });
+                        Array.from(element.querySelectorAll('li')).forEach(li => {
+                            const liText = li.textContent.trim();
+                            if (liText) {
+                                addText(`• ${liText}`, { size: 10, indent: 20, spacing: 4 });
+                            }
                         });
-                        cursorY += 8;
+                        cursorY += 5;
+                        break;
+                    case 'OL':
+                        Array.from(element.querySelectorAll('li')).forEach((li, index) => {
+                            const liText = li.textContent.trim();
+                            if (liText) {
+                                addText(`${index + 1}. ${liText}`, { size: 10, indent: 20, spacing: 4 });
+                            }
+                        });
+                        cursorY += 5;
                         break;
                     case 'HR':
-                        if (cursorY + 15 > doc.internal.pageSize.getHeight() - margin) {
-                           doc.addPage();
-                           cursorY = margin;
-                        }
-                        doc.setDrawColor(200, 200, 200);
-                        doc.line(margin, cursorY, pageWidth - margin, cursorY);
-                        cursorY += 15;
+                        addSeparator();
+                        break;
+                    case 'BLOCKQUOTE':
+                        addText(textContent, { size: 10, style: 'italic', indent: 20, spacing: 8 });
                         break;
                     default:
                         if (textContent) {
-                            addText(textContent, { size: 10 });
+                            addText(textContent, { size: 10, spacing: 4 });
                         }
                 }
-            });
+            };
+
+            // Processar todos os elementos filhos
+            Array.from(tempContainer.children).forEach(processElement);
 
             doc.save(fileName);
         }
