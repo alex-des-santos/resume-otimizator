@@ -351,15 +351,105 @@
         };
         
         // Configuração do marked.js - compatível com versão 4.3.0
-        if (typeof marked !== 'undefined') {
-            marked.setOptions({
-                gfm: true,
-                pedantic: false,
-                breaks: true,
-                sanitize: false
-            });
-        }
+        const configureMarked = () => {
+            if (typeof marked !== 'undefined') {
+                marked.setOptions({
+                    gfm: true,
+                    pedantic: false,
+                    breaks: true,
+                    sanitize: false,
+                    smartLists: true,
+                    smartypants: false,
+                    headerIds: false,
+                    mangle: false
+                });
+                
+                // Configurar renderer personalizado para garantir formatação consistente
+                const renderer = new marked.Renderer();
+                
+                // Personalizar renderização de cabeçalhos
+                renderer.heading = function(text, level) {
+                    return `<h${level}>${text}</h${level}>\n`;
+                };
+                
+                // Personalizar renderização de parágrafos
+                renderer.paragraph = function(text) {
+                    return `<p>${text}</p>\n`;
+                };
+                
+                // Personalizar renderização de listas
+                renderer.list = function(body, ordered) {
+                    const type = ordered ? 'ol' : 'ul';
+                    return `<${type}>\n${body}</${type}>\n`;
+                };
+                
+                renderer.listitem = function(text) {
+                    return `<li>${text}</li>\n`;
+                };
+                
+                // Personalizar renderização de separadores
+                renderer.hr = function() {
+                    return '<hr>\n';
+                };
+                
+                marked.setOptions({ renderer: renderer });
+                console.log('Marked.js configurado com renderer personalizado');
+            }
+        };
         
+        configureMarked();
+        
+        // Função para normalizar e validar markdown
+        function normalizeMarkdown(markdown) {
+            if (!markdown || typeof markdown !== 'string') {
+                return '';
+            }
+            
+            let normalized = markdown
+                // Normalizar quebras de linha
+                .replace(/\r\n/g, '\n')
+                .replace(/\r/g, '\n')
+                // Remover espaços extras no início e fim
+                .trim()
+                // Garantir espaçamento adequado ao redor de cabeçalhos
+                .replace(/\n(#{1,6}\s)/g, '\n\n$1')
+                .replace(/(#{1,6}\s[^\n]+)\n/g, '$1\n\n')
+                // Garantir espaçamento adequado ao redor de separadores
+                .replace(/\n---\n/g, '\n\n---\n\n')
+                // Garantir espaçamento adequado ao redor de listas
+                .replace(/\n(\*\s|1\.\s)/g, '\n\n$1')
+                // Remover múltiplas quebras de linha consecutivas
+                .replace(/\n{3,}/g, '\n\n');
+            
+            console.log('Markdown normalizado aplicado');
+            return normalized;
+        }
+
+        // Função para processar markdown com fallback
+        function processMarkdown(rawMarkdown) {
+            try {
+                const normalizedMarkdown = normalizeMarkdown(rawMarkdown);
+                
+                if (typeof marked === 'undefined') {
+                    throw new Error('Marked.js não está disponível');
+                }
+                
+                const htmlContent = marked.parse(normalizedMarkdown);
+                
+                // Validar se o HTML foi gerado corretamente
+                if (!htmlContent || htmlContent.trim().length === 0) {
+                    throw new Error('HTML vazio gerado pelo marked.js');
+                }
+                
+                return htmlContent;
+                
+            } catch (error) {
+                console.error('Erro ao processar markdown:', error);
+                // Fallback: retornar texto pré-formatado
+                return `<pre class="whitespace-pre-wrap prose-output">${rawMarkdown}</pre>`;
+            }
+        }
+
         // Verificar bibliotecas após um pequeno delay
         setTimeout(checkLibraries, 1000);
           // --- DOM Elements ---
@@ -502,18 +592,27 @@
                 const result = await callGeminiAPI(prompt);
                 optimizedMarkdown = result;
                 
-                // Garantir que o marked.js foi carregado
-                if (typeof marked === 'undefined') {
-                    throw new Error('Biblioteca marked.js não foi carregada corretamente');
-                }
+                // Debug: Log do resultado da API
+                console.log('Markdown bruto recebido:', optimizedMarkdown.substring(0, 500) + '...');
                 
-                // Processar o markdown e aplicar formatação
-                const htmlContent = marked.parse(optimizedMarkdown);
+                // Processar markdown usando a função robusta
+                const htmlContent = processMarkdown(optimizedMarkdown);
+                
+                // Debug: Log do HTML gerado
+                console.log('HTML gerado:', htmlContent.substring(0, 500) + '...');
+                
                 markdownPreview.innerHTML = htmlContent;
+                
+                // Forçar re-renderização dos estilos
+                markdownPreview.classList.remove('prose-output');
+                setTimeout(() => {
+                    markdownPreview.classList.add('prose-output');
+                }, 10);
                 
                 downloadPdfButton.disabled = false;
                 enableFeatureButtons(true);
             } catch (error) {
+                console.error('Erro na geração:', error);
                 showError('Erro na Otimização', error.message);
                 markdownPreview.innerHTML = `<p class="text-red-500">Falha ao gerar o currículo. Verifique sua chave de API e os dados fornecidos.</p>`;
                 downloadPdfButton.disabled = true;
@@ -879,20 +978,9 @@
         function showContentModal(title, markdownContent) {
             contentModalTitle.textContent = title;
             
-            // Garantir que o marked.js está disponível
-            if (typeof marked === 'undefined') {
-                contentModalBody.innerHTML = `<p class="text-red-500">Erro: Biblioteca de formatação não carregada.</p>`;
-                return;
-            }
-            
-            // Processar o markdown
-            try {
-                const htmlContent = marked.parse(markdownContent);
-                contentModalBody.innerHTML = htmlContent;
-            } catch (error) {
-                console.error('Erro ao processar markdown:', error);
-                contentModalBody.innerHTML = `<pre class="whitespace-pre-wrap">${markdownContent}</pre>`;
-            }
+            // Processar markdown usando a função robusta
+            const htmlContent = processMarkdown(markdownContent);
+            contentModalBody.innerHTML = htmlContent;
             
             contentModal.classList.remove('hidden');
         }
