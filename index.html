@@ -221,7 +221,7 @@
                                 <input type="url" id="jobUrl" class="flex-1 px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="https://www.linkedin.com/jobs/view/...">
                                 <button id="extractJobButton" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition disabled:bg-gray-400 disabled:cursor-not-allowed">
                                     <svg id="extractLoader" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                    <span id="extractButtonText">Abrir Vaga</span>
+                                    <span id="extractButtonText">Extrair Descrição</span>
                                 </button>
                             </div>
                             <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
@@ -230,14 +230,14 @@
                                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                                     </svg>
                                     <div class="text-blue-700">
-                                        <strong>Como usar:</strong> Cole a URL da vaga do LinkedIn e clique em "Abrir Vaga". Em seguida, copie a descrição da vaga e cole no campo que aparecerá abaixo.
+                                        <strong>✨ Extração Inteligente:</strong> Cole a URL da vaga do LinkedIn e clique em "Extrair Descrição". O sistema tentará extrair automaticamente o conteúdo da vaga usando múltiplos métodos. Se a extração automática falhar, você será orientado para cópia manual.
                                     </div>
                                 </div>
                             </div>
                             <div id="extractedJobDescription" class="hidden">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Descrição Extraída</label>
-                                <textarea id="extractedJobText" rows="6" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" readonly placeholder="A descrição da vaga extraída aparecerá aqui..."></textarea>
-                                <p class="text-xs text-gray-500 mt-1">Você pode editar a descrição extraída se necessário</p>
+                                <textarea id="extractedJobText" rows="6" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="A descrição da vaga extraída aparecerá aqui..."></textarea>
+                                <p class="text-xs text-gray-500 mt-1">✅ Descrição sincronizada automaticamente. Você pode editar se necessário.</p>
                             </div>
                         </div>
                     </div>
@@ -595,9 +595,28 @@
         jobInputModeUrlButton.addEventListener('click', () => switchJobInputMode('url'));
         extractJobButton.addEventListener('click', handleJobExtraction);
         
-        // Sincronizar texto extraído com campo principal quando editado
-        extractedJobTextInput.addEventListener('input', () => {
-            jobDescriptionInput.value = extractedJobTextInput.value;
+        // Sincronizar o campo extraído com o campo principal quando o usuário colar ou digitar
+        extractedJobTextInput.addEventListener('input', function() {
+            if (extractedJobTextInput.value.trim()) {
+                jobDescriptionInput.value = extractedJobTextInput.value;
+                console.log('Descrição sincronizada automaticamente');
+            }
+        });
+
+        extractedJobTextInput.addEventListener('paste', function() {
+            // Aguardar um momento para o texto ser colado
+            setTimeout(() => {
+                if (extractedJobTextInput.value.trim()) {
+                    jobDescriptionInput.value = extractedJobTextInput.value;
+                    console.log('Descrição sincronizada após colar');
+                    
+                    // Mostrar feedback visual
+                    extractedJobTextInput.style.borderColor = '#4CAF50';
+                    setTimeout(() => {
+                        extractedJobTextInput.style.borderColor = '';
+                    }, 2000);
+                }
+            }, 100);
         });
 
         Object.keys(featureButtons).forEach(key => {
@@ -644,7 +663,46 @@
             }
             
             try {
-                // Abrir a URL em uma nova aba
+                toggleExtractLoader(true);
+                
+                // Tentar extrair automaticamente primeiro
+                const jobDescription = await extractJobFromLinkedIn(jobUrl);
+                
+                if (!jobDescription || jobDescription.trim().length === 0) {
+                    throw new Error('Não foi possível extrair a descrição da vaga automaticamente.');
+                }
+                
+                // Mostrar o resultado da extração automática
+                extractedJobTextInput.value = jobDescription;
+                extractedJobTextInput.readOnly = false; // Permitir edição
+                extractedJobDescription.classList.remove('hidden');
+                
+                // Atualizar o campo principal (para compatibilidade com o resto do código)
+                jobDescriptionInput.value = jobDescription;
+                
+                // Mostrar sucesso
+                showContentModal(
+                    "✅ Descrição Extraída com Sucesso!",
+                    `## Extração automática concluída!
+
+A descrição da vaga foi extraída automaticamente do LinkedIn e já está preenchida no campo abaixo.
+
+**Próximos passos:**
+1. Revise a descrição extraída (você pode editá-la se necessário)
+2. Certifique-se de que todas as informações importantes estão incluídas
+3. Clique em "Gerar Currículo Otimizado" para continuar
+
+**Dica:** A extração automática captura o texto principal da vaga, mas você pode adicionar informações extras como benefícios específicos ou requisitos que possam ter sido perdidos.`
+                );
+                
+            } catch (error) {
+                console.error('Erro na extração automática:', error);
+                
+                // Fallback para método manual
+                showError('Extração Automática Falhou', 
+                    `Não foi possível extrair automaticamente: ${error.message}\n\nVamos abrir a vaga para você copiar manualmente.`);
+                
+                // Abrir a URL em uma nova aba como fallback
                 window.open(jobUrl, '_blank');
                 
                 // Mostrar o campo para colar a descrição
@@ -653,10 +711,11 @@
                 extractedJobTextInput.placeholder = "Cole aqui a descrição da vaga copiada do LinkedIn...";
                 extractedJobTextInput.focus();
                 
-                // Mostrar instruções
-                showContentModal(
-                    "Instruções para Extrair Descrição da Vaga",
-                    `## Passos para copiar a descrição da vaga:
+                // Mostrar instruções de fallback
+                setTimeout(() => {
+                    showContentModal(
+                        "📋 Instruções para Cópia Manual",
+                        `## A extração automática não funcionou, mas você pode copiar manualmente:
 
 1. **Na nova aba que se abriu:**
    - Localize a seção "About the job" ou "Descrição da vaga"
@@ -672,30 +731,253 @@
    - Responsabilidades da função
    - Benefícios (se relevantes)
 
+**Por que a extração automática falhou?**
+- O LinkedIn pode estar bloqueando requisições automatizadas
+- A estrutura da página pode ter mudado
+- Pode ser uma página que requer login
+
 Depois de colar o texto, você pode editá-lo se necessário antes de gerar o currículo otimizado.`
-                );
+                    );
+                }, 1000);
                 
-            } catch (error) {
-                console.error('Erro ao abrir URL:', error);
-                showError('Erro', 'Não foi possível abrir a URL. Verifique se a URL está correta.');
+            } finally {
+                toggleExtractLoader(false);
             }
         }
 
         async function extractJobFromLinkedIn(url) {
+            // Lista de serviços proxy para tentar
+            const proxyServices = [
+                { name: 'AllOrigins', url: `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, type: 'json' },
+                { name: 'CORS Anywhere', url: `https://cors-anywhere.herokuapp.com/${url}`, type: 'text' },
+                { name: 'CodeTabs', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, type: 'text' }
+            ];
+            
+            let lastError = null;
+            
+            for (let i = 0; i < proxyServices.length; i++) {
+                const proxy = proxyServices[i];
+                try {
+                    toggleExtractLoader(true, `Tentando ${proxy.name}...`);
+                    console.log(`Tentando proxy ${i + 1} (${proxy.name}):`, proxy.url);
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos
+                    
+                    const response = await fetch(proxy.url, {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                            'Accept-Language': 'en-US,en;q=0.9,pt;q=0.8'
+                        },
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
+                    }
+                    
+                    toggleExtractLoader(true, `Processando conteúdo...`);
+                    
+                    let htmlContent;
+                    
+                    if (proxy.type === 'json') {
+                        const data = await response.json();
+                        htmlContent = data.contents;
+                    } else {
+                        htmlContent = await response.text();
+                    }
+                    
+                    if (!htmlContent || htmlContent.length < 1000) {
+                        throw new Error('Conteúdo HTML insuficiente ou vazio');
+                    }
+                    
+                    // Criar um parser DOM temporário
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlContent, 'text/html');
+                    
+                    // Tentar diferentes seletores para encontrar a descrição da vaga
+                    const selectors = [
+                        '.description__text',
+                        '.show-more-less-html__markup',
+                        '.jobs-description__content',
+                        '.jobs-box__html-content',
+                        '[data-test="job-description"]',
+                        '.jobs-description-content__text',
+                        '.jobs-description',
+                        '.job-description',
+                        '.description',
+                        '.jobs-description-details',
+                        '.jobs-box__html-content > *',
+                        '.core-section-container__content',
+                        '.jobs-unified-description',
+                        '.jobs-description-content'
+                    ];
+                    
+                    let jobDescription = '';
+                    
+                    for (const selector of selectors) {
+                        const element = doc.querySelector(selector);
+                        if (element) {
+                            // Limpar HTML e extrair texto
+                            const textContent = element.textContent || element.innerText;
+                            jobDescription = cleanJobDescription(textContent);
+                            
+                            if (jobDescription.length > 200) { // Validar se tem conteúdo significativo
+                                console.log(`Descrição encontrada usando seletor: ${selector} (proxy ${proxy.name})`);
+                                console.log(`Tamanho da descrição: ${jobDescription.length} caracteres`);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Se não encontrou com seletores específicos, tentar buscar por texto
+                    if (!jobDescription || jobDescription.length < 200) {
+                        console.log('Tentando extração por padrões de texto...');
+                        jobDescription = extractJobDescriptionFromText(htmlContent);
+                    }
+                    
+                    // Validação final
+                    if (jobDescription && jobDescription.length >= 100) {
+                        console.log(`Extração bem-sucedida com ${proxy.name}! Tamanho: ${jobDescription.length} caracteres`);
+                        return jobDescription;
+                    } else {
+                        throw new Error(`Descrição muito curta ou vazia (${jobDescription.length} caracteres)`);
+                    }
+                    
+                } catch (error) {
+                    console.error(`Proxy ${proxy.name} falhou:`, error.message);
+                    lastError = error;
+                    
+                    // Se não é o último proxy, continuar tentando
+                    if (i < proxyServices.length - 1) {
+                        console.log(`Tentando próximo proxy...`);
+                        await new Promise(resolve => setTimeout(resolve, 1000)); // Aguardar 1 segundo
+                        continue;
+                    }
+                }
+            }
+            
+            // Se chegou aqui, todos os proxies falharam
+            throw new Error(`Todos os métodos de extração falharam. Último erro: ${lastError?.message || 'Desconhecido'}`);
+        }
+        
+        function cleanJobDescription(text) {
+            if (!text) return '';
+            
+            let cleaned = text
+                // Remover múltiplos espaços em branco e quebras de linha
+                .replace(/\s+/g, ' ')
+                // Remover caracteres de controle
+                .replace(/[\x00-\x1F\x7F]/g, '')
+                // Manter caracteres básicos de pontuação e texto
+                .replace(/[^\w\s\-.,;:()\[\]\/&%@#$*+=<>?!'"°]/g, ' ')
+                // Remover textos comuns do LinkedIn que não são da descrição
+                .replace(/Show more|Show less|See more|See less|LinkedIn/gi, '')
+                .replace(/Apply now|Easy Apply|Be among the first.*?applicants/gi, '')
+                .replace(/Posted.*?ago|.*?applicants|.*?viewers/gi, '')
+                .replace(/Save|Report this job|Flag as inappropriate/gi, '')
+                .replace(/Skip to main content|Skip navigation/gi, '')
+                // Remover elementos de navegação comuns
+                .replace(/Main content starts here, tab to start navigating/gi, '')
+                .replace(/Search jobs|Job search|Filter jobs/gi, '')
+                // Limpar início e fim de frases comuns
+                .replace(/^(About this job|Job description|Description|Job Details)/gi, '')
+                .replace(/(Apply for this job|Submit application)$/gi, '')
+                // Remover múltiplos espaços novamente
+                .replace(/\s+/g, ' ')
+                // Trim final
+                .trim();
+                
+            // Se o texto ainda está muito curto ou parece inválido
+            if (cleaned.length < 50 || cleaned.match(/^[^a-zA-Z]*$/)) {
+                return '';
+            }
+            
+            // Verificar se o texto parece ser uma descrição válida (contém algumas palavras-chave)
+            const hasJobKeywords = /\b(experience|skills|responsibility|qualifications|requirements|role|position|job|work|team|company|candidate|application|degree|years|knowledge|ability)\b/i.test(cleaned);
+            
+            if (!hasJobKeywords && cleaned.length < 200) {
+                return '';
+            }
+            
+            return cleaned;
+        }
+        
+        function extractJobDescriptionFromText(html) {
+            console.log('Iniciando extração de texto simples...');
             try {
-                // Devido às políticas CORS do LinkedIn, não podemos fazer fetch direto
-                // Vamos instruir o usuário sobre como extrair manualmente
-                throw new Error('Extração automática não disponível devido às políticas de segurança do LinkedIn. \n\nPara usar este recurso:\n1. Abra a vaga no LinkedIn\n2. Copie toda a descrição da vaga\n3. Volte aqui e cole no modo "Texto"');
+                // Remover tags HTML de forma simples
+                let text = html;
+                
+                // Remover elementos não desejados
+                text = text.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+                text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+                text = text.replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '');
+                text = text.replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '');
+                text = text.replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '');
+                
+                // Remover todas as tags HTML
+                text = text.replace(/</g, ' ');
+                text = text.replace(/>/g, ' ');
+                
+                // Normalizar espaços
+                text = text.replace(/\s+/g, ' ').trim();
+                
+                // Procurar por descrições usando indexOf
+                const jobKeywords = ['about the job', 'job description', 'responsibilities', 'what you will do'];
+                const endKeywords = ['qualifications', 'requirements', 'apply now', 'skills'];
+                
+                let bestDescription = '';
+                
+                for (let i = 0; i < jobKeywords.length; i++) {
+                    const keyword = jobKeywords[i];
+                    const startPos = text.toLowerCase().indexOf(keyword);
+                    
+                    if (startPos >= 0) {
+                        let endPos = text.length;
+                        
+                        for (let j = 0; j < endKeywords.length; j++) {
+                            const endKeyword = endKeywords[j];
+                            const foundEnd = text.toLowerCase().indexOf(endKeyword, startPos + keyword.length);
+                            if (foundEnd >= 0 && foundEnd < endPos) {
+                                endPos = foundEnd;
+                            }
+                        }
+                        
+                        const description = text.substring(startPos + keyword.length, endPos);
+                        const cleaned = cleanJobDescription(description);
+                        
+                        if (cleaned.length > bestDescription.length && cleaned.length > 100) {
+                            bestDescription = cleaned;
+                        }
+                    }
+                }
+                
+                if (bestDescription) {
+                    console.log('Descrição encontrada com sucesso');
+                    return bestDescription;
+                }
+                
+                return '';
                 
             } catch (error) {
-                throw error;
+                console.error('Erro na extração:', error);
+                return '';
             }
         }
 
-        function toggleExtractLoader(isLoading) {
+        function toggleExtractLoader(isLoading, status = '') {
             extractJobButton.disabled = isLoading;
             extractLoader.classList.toggle('hidden', !isLoading);
-            extractButtonText.textContent = isLoading ? 'Extraindo...' : 'Extrair';
+            
+            if (isLoading) {
+                extractButtonText.textContent = status || 'Extraindo...';
+            } else {
+                extractButtonText.textContent = 'Extrair Descrição';
+            }
         }
 
         function updateLanguageSelection() {
@@ -1075,7 +1357,7 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
         function generateFileNameFromJobDescription() {
             // Obter descrição da vaga do campo ativo
             let jobDesc;
-            if (jobUrlMode.classList.contains('hidden')) {
+                       if (jobUrlMode.classList.contains('hidden')) {
                 // Modo texto ativo
                 jobDesc = jobDescriptionInput.value.trim();
             } else {
@@ -1209,6 +1491,23 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
             contentModalBody.innerHTML = htmlContent;
             
             contentModal.classList.remove('hidden');
+        }
+
+        async function validateLinkedInUrl(url) {
+            try {
+                // Verificar se a URL responde (mesmo que seja bloqueada pelo CORS)
+                const response = await fetch(url, { 
+                    method: 'HEAD',
+                    mode: 'no-cors'
+                });
+                return true; // Se chegou até aqui, a URL existe
+            } catch (error) {
+                // Mesmo com erro de CORS, se for um erro de rede, a URL pode não existir
+                if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+                    return false;
+                }
+                return true; // Outros erros (como CORS) indicam que a URL existe
+            }
         }
     </script>
 </body>
