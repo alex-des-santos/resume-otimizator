@@ -201,8 +201,46 @@
                 </div>
 
                 <div class="mb-6">
-                    <label for="jobDescription" class="block text-sm font-medium text-gray-700 mb-1">Descrição da Vaga</label>
-                    <textarea id="jobDescription" rows="8" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Cole a descrição completa da vaga..."></textarea>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-sm font-medium text-gray-700">Descrição da Vaga</label>
+                        <div class="flex bg-gray-100 rounded-lg p-1">
+                            <button id="jobInputModeText" class="px-3 py-1 text-xs font-medium rounded-md transition-colors bg-indigo-600 text-white">Texto</button>
+                            <button id="jobInputModeUrl" class="px-3 py-1 text-xs font-medium rounded-md transition-colors text-gray-600 hover:text-gray-800">URL LinkedIn</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Modo Texto (padrão) -->
+                    <div id="jobTextMode">
+                        <textarea id="jobDescription" rows="8" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Cole a descrição completa da vaga..."></textarea>
+                    </div>
+                    
+                    <!-- Modo URL -->
+                    <div id="jobUrlMode" class="hidden">
+                        <div class="space-y-3">
+                            <div class="flex gap-2">
+                                <input type="url" id="jobUrl" class="flex-1 px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="https://www.linkedin.com/jobs/view/...">
+                                <button id="extractJobButton" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                    <svg id="extractLoader" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    <span id="extractButtonText">Abrir Vaga</span>
+                                </button>
+                            </div>
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                                <div class="flex items-start">
+                                    <svg class="h-5 w-5 text-blue-400 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <div class="text-blue-700">
+                                        <strong>Como usar:</strong> Cole a URL da vaga do LinkedIn e clique em "Abrir Vaga". Em seguida, copie a descrição da vaga e cole no campo que aparecerá abaixo.
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="extractedJobDescription" class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Descrição Extraída</label>
+                                <textarea id="extractedJobText" rows="6" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" readonly placeholder="A descrição da vaga extraída aparecerá aqui..."></textarea>
+                                <p class="text-xs text-gray-500 mt-1">Você pode editar a descrição extraída se necessário</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>                <div class="mb-6">
                     <label for="resumeFile" class="block text-sm font-medium text-gray-700 mb-1">Seu Currículo em PDF</label>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
@@ -469,6 +507,16 @@
           // --- DOM Elements ---
         const apiKeyInput = document.getElementById('apiKey');
         const jobDescriptionInput = document.getElementById('jobDescription');
+        const jobUrlInput = document.getElementById('jobUrl');
+        const extractedJobTextInput = document.getElementById('extractedJobText');
+        const jobInputModeTextButton = document.getElementById('jobInputModeText');
+        const jobInputModeUrlButton = document.getElementById('jobInputModeUrl');
+        const jobTextMode = document.getElementById('jobTextMode');
+        const jobUrlMode = document.getElementById('jobUrlMode');
+        const extractJobButton = document.getElementById('extractJobButton');
+        const extractedJobDescription = document.getElementById('extractedJobDescription');
+        const extractLoader = document.getElementById('extractLoader');
+        const extractButtonText = document.getElementById('extractButtonText');
         const resumeFileInput = document.getElementById('resumeFile');
         const pdfFileNameInput = document.getElementById('pdfFileName');
         const fileNameDisplay = document.getElementById('fileName');
@@ -542,11 +590,113 @@
         languagePtInput.addEventListener('change', updateLanguageSelection);
         languageEnInput.addEventListener('change', updateLanguageSelection);
 
+        // Job input mode event listeners
+        jobInputModeTextButton.addEventListener('click', () => switchJobInputMode('text'));
+        jobInputModeUrlButton.addEventListener('click', () => switchJobInputMode('url'));
+        extractJobButton.addEventListener('click', handleJobExtraction);
+        
+        // Sincronizar texto extraído com campo principal quando editado
+        extractedJobTextInput.addEventListener('input', () => {
+            jobDescriptionInput.value = extractedJobTextInput.value;
+        });
+
         Object.keys(featureButtons).forEach(key => {
             featureButtons[key].addEventListener('click', (e) => handleFeatureClick(e.currentTarget, key));
         });
 
         // --- Core Functions ---
+
+        function switchJobInputMode(mode) {
+            if (mode === 'text') {
+                // Ativar modo texto
+                jobInputModeTextButton.classList.add('bg-indigo-600', 'text-white');
+                jobInputModeTextButton.classList.remove('text-gray-600', 'hover:text-gray-800');
+                jobInputModeUrlButton.classList.remove('bg-indigo-600', 'text-white');
+                jobInputModeUrlButton.classList.add('text-gray-600', 'hover:text-gray-800');
+                
+                jobTextMode.classList.remove('hidden');
+                jobUrlMode.classList.add('hidden');
+            } else if (mode === 'url') {
+                // Ativar modo URL
+                jobInputModeUrlButton.classList.add('bg-indigo-600', 'text-white');
+                jobInputModeUrlButton.classList.remove('text-gray-600', 'hover:text-gray-800');
+                jobInputModeTextButton.classList.remove('bg-indigo-600', 'text-white');
+                jobInputModeTextButton.classList.add('text-gray-600', 'hover:text-gray-800');
+                
+                jobUrlMode.classList.remove('hidden');
+                jobTextMode.classList.add('hidden');
+            }
+        }
+
+        async function handleJobExtraction() {
+            const jobUrl = jobUrlInput.value.trim();
+            
+            if (!jobUrl) {
+                showError('URL Necessária', 'Por favor, insira a URL da vaga do LinkedIn.');
+                return;
+            }
+            
+            // Validar se é uma URL do LinkedIn
+            const linkedinJobPattern = /^https?:\/\/(www\.)?linkedin\.com\/jobs\/view\/\d+/;
+            if (!linkedinJobPattern.test(jobUrl)) {
+                showError('URL Inválida', 'Por favor, insira uma URL válida de vaga do LinkedIn (ex: https://www.linkedin.com/jobs/view/123456789).');
+                return;
+            }
+            
+            try {
+                // Abrir a URL em uma nova aba
+                window.open(jobUrl, '_blank');
+                
+                // Mostrar o campo para colar a descrição
+                extractedJobDescription.classList.remove('hidden');
+                extractedJobTextInput.readOnly = false;
+                extractedJobTextInput.placeholder = "Cole aqui a descrição da vaga copiada do LinkedIn...";
+                extractedJobTextInput.focus();
+                
+                // Mostrar instruções
+                showContentModal(
+                    "Instruções para Extrair Descrição da Vaga",
+                    `## Passos para copiar a descrição da vaga:
+
+1. **Na nova aba que se abriu:**
+   - Localize a seção "About the job" ou "Descrição da vaga"
+   - Selecione todo o texto da descrição
+   - Copie (Ctrl+C)
+
+2. **Volte para esta aba:**
+   - Cole o texto no campo "Descrição Extraída" abaixo
+   - O texto será automaticamente usado para otimizar seu currículo
+
+3. **Dica:** Inclua também:
+   - Requisitos e qualificações
+   - Responsabilidades da função
+   - Benefícios (se relevantes)
+
+Depois de colar o texto, você pode editá-lo se necessário antes de gerar o currículo otimizado.`
+                );
+                
+            } catch (error) {
+                console.error('Erro ao abrir URL:', error);
+                showError('Erro', 'Não foi possível abrir a URL. Verifique se a URL está correta.');
+            }
+        }
+
+        async function extractJobFromLinkedIn(url) {
+            try {
+                // Devido às políticas CORS do LinkedIn, não podemos fazer fetch direto
+                // Vamos instruir o usuário sobre como extrair manualmente
+                throw new Error('Extração automática não disponível devido às políticas de segurança do LinkedIn. \n\nPara usar este recurso:\n1. Abra a vaga no LinkedIn\n2. Copie toda a descrição da vaga\n3. Volte aqui e cole no modo "Texto"');
+                
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        function toggleExtractLoader(isLoading) {
+            extractJobButton.disabled = isLoading;
+            extractLoader.classList.toggle('hidden', !isLoading);
+            extractButtonText.textContent = isLoading ? 'Extraindo...' : 'Extrair';
+        }
 
         function updateLanguageSelection() {
             const selectedLanguage = document.querySelector('input[name="resumeLanguage"]:checked').value;
@@ -664,7 +814,16 @@
 
         async function callGeminiAPI(prompt) {
             const apiKey = apiKeyInput.value.trim();
-            const jobDescription = jobDescriptionInput.value.trim();
+            
+            // Obter descrição da vaga do campo ativo
+            let jobDescription;
+            if (jobUrlMode.classList.contains('hidden')) {
+                // Modo texto ativo
+                jobDescription = jobDescriptionInput.value.trim();
+            } else {
+                // Modo URL ativo - usar texto extraído ou o campo principal
+                jobDescription = extractedJobTextInput.value.trim() || jobDescriptionInput.value.trim();
+            }
 
             if (!apiKey || !jobDescription || !resumeText) {
                 let missing = [];
@@ -863,7 +1022,17 @@
          * User inputs are now sanitized.
          */
         function getPrompt(type, markdownInput = '') {
-            const jobDesc = sanitizeForPrompt(jobDescriptionInput.value);
+            // Obter descrição da vaga do campo ativo
+            let jobDescValue;
+            if (jobUrlMode.classList.contains('hidden')) {
+                // Modo texto ativo
+                jobDescValue = jobDescriptionInput.value;
+            } else {
+                // Modo URL ativo - usar texto extraído ou o campo principal
+                jobDescValue = extractedJobTextInput.value || jobDescriptionInput.value;
+            }
+            
+            const jobDesc = sanitizeForPrompt(jobDescValue);
             const originalResume = sanitizeForPrompt(resumeText);
             const markdown = sanitizeForPrompt(markdownInput); // Sanitize the markdown input from optimized resume
             const selectedLanguage = document.querySelector('input[name="resumeLanguage"]:checked').value;
@@ -904,7 +1073,16 @@
 
 
         function generateFileNameFromJobDescription() {
-            const jobDesc = jobDescriptionInput.value.trim();
+            // Obter descrição da vaga do campo ativo
+            let jobDesc;
+            if (jobUrlMode.classList.contains('hidden')) {
+                // Modo texto ativo
+                jobDesc = jobDescriptionInput.value.trim();
+            } else {
+                // Modo URL ativo - usar texto extraído ou o campo principal
+                jobDesc = extractedJobTextInput.value.trim() || jobDescriptionInput.value.trim();
+            }
+            
             if (!jobDesc) {
                 return 'curriculo-otimizado';
             }
