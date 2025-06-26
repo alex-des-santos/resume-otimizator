@@ -1345,93 +1345,46 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                 case 'pitch':
                     return `[Persona] Coach de Carreira especialista em entrevistas. [Contexto] Criar um "pitch" para a pergunta "Fale sobre você". [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Crie um pitch pessoal de 3 parágrafos (máximo de 150 palavras). 1º parágrafo: Apresentação (profissão, anos de experiência). 2º parágrafo: Conecte suas habilidades e uma conquista chave do currículo aos requisitos da vaga. 3º parágrafo: Expresse entusiasmo pela vaga e o que espera alcançar. ${langInstruction} [Formato da Saída] Markdown.`;                case 'star':
                     return `[Persona] Coach de Entrevistas Comportamentais. [Contexto] Estruturar experiências usando o método STAR (Situação, Tarefa, Ação, Resultado). [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Selecione as 2 experiências profissionais mais relevantes do currículo. Para cada uma, estruture-a no formato STAR: **Situação:** (O contexto/desafio), **Tarefa:** (Sua responsabilidade), **Ação:** (O que você fez), **Resultado:** (O impacto quantificado). ${langInstruction} [Formato da Saída] Markdown com cabeçalhos claros para cada história e para S, T, A, R.`;                case 'salary':
-                    return `[Persona] Consultor de Remuneração especialista no mercado brasileiro, com conhecimento profundo sobre modalidades CLT e PJ. [Contexto] Realizar análise completa de pretensão salarial considerando tanto contratação CLT quanto PJ. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções CRÍTICAS] Sua análise deve ser extremamente detalhada e baseada no mercado brasileiro atual. Execute as seguintes análises:
+                    return `[Persona] Consultor de Remuneração especialista no mercado brasileiro. [Contexto] Calcular pretensão salarial para CLT e PJ de forma prática e objetiva. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Forneça uma análise concisa e prática seguindo exatamente esta estrutura:
 
-## 1. ANÁLISE DA VAGA E MERCADO
-- **Nível hierárquico:** (Júnior/Pleno/Sênior/Especialista/Liderança)
-- **Setor de atuação:** (Tech, Financeiro, Saúde, etc.)
-- **Localização inferida:** (São Paulo, Rio, Remoto, etc.)
-- **Tamanho da empresa:** (Startup, Média, Grande, Multinacional)
-- **Complexidade das responsabilidades:** (Análise detalhada)
+## 📊 ANÁLISE DA VAGA
+- **Nível:** (Júnior/Pleno/Sênior/Especialista)
+- **Setor:** (identifique o setor)
+- **Localização:** (infira: SP/RJ/Remoto/Nacional)
+- **Porte da empresa:** (Startup/Média/Grande)
 
-## 2. ANÁLISE DO PERFIL DO CANDIDATO
-- **Anos de experiência relevante**
-- **Competências técnicas alinhadas**
-- **Competências comportamentais destacadas**
-- **Certificações e formação diferencial**
-- **Nível de senioridade inferido**
+## 👤 SEU PERFIL
+- **Experiência relevante:** X anos
+- **Match com a vaga:** (Alto/Médio/Baixo) - justifique brevemente
+- **Diferencial:** (principal ponto forte para esta vaga)
 
-## 3. CÁLCULO DETALHADO - MODALIDADE CLT
-### 3.1 Salário Bruto Mensal
-- **Faixa salarial:** R$ [mín] a R$ [máx]
-- **Salário base sugerido:** R$ [valor]
-- **13º salário:** R$ [valor anual]
-- **Férias + 1/3:** R$ [valor anual]
+## 💰 VALORES SUGERIDOS
 
-### 3.2 Benefícios Típicos (valor estimado)
-- **Vale refeição/alimentação:** R$ [valor mensal]
-- **Plano de saúde:** R$ [valor mensal]
-- **Vale transporte:** R$ [valor mensal] ou auxílio home office
-- **PLR (se aplicável):** R$ [valor anual estimado]
-- **Outros benefícios:** (Seguro de vida, auxílio educação, etc.)
+### CLT
+- **Salário bruto:** R$ X.XXX a R$ X.XXX
+- **Com benefícios típicos:** ~R$ X.XXX (VR + Plano + outros)
+- **Custo total empresa:** ~R$ X.XXX (para sua referência)
 
-### 3.3 Custo Total para Empresa (CLT)
-- **Salário + encargos (≈80-100%):** R$ [valor mensal]
-- **Custo anual total:** R$ [valor]
+### PJ
+- **Valor/hora:** R$ XXX (160h/mês)
+- **Faturamento mensal:** R$ X.XXX
+- **Líquido estimado:** ~R$ X.XXX (descontando impostos simples)
 
-## 4. CÁLCULO DETALHADO - MODALIDADE PJ
-### 4.1 Faturamento Mensal Sugerido
-- **Valor hora:** R$ [valor] (base: 160h/mês)
-- **Faturamento mensal:** R$ [valor]
-- **Faturamento anual:** R$ [valor]
+## 🎯 RECOMENDAÇÃO
+**Modalidade mais vantajosa:** [CLT/PJ/Equivalente]
+**Justificativa:** (1-2 frases explicando o porquê)
 
-### 4.2 Impostos e Custos PJ
-- **Simples Nacional (≈6-15%):** R$ [valor mensal]
-- **Contador:** R$ [300-800 mensal]
-- **Outros custos:** R$ [valor] (software, equipamentos, etc.)
-- **Férias/13º (reserva):** R$ [valor mensal a guardar]
+## 💬 COMO NEGOCIAR
+### Se perguntarem sua pretensão:
+- **CLT:** "Estou buscando algo entre R$ X.XXX e R$ X.XXX, dependendo do pacote de benefícios"
+- **PJ:** "Meu valor/hora é R$ XXX, que dá aproximadamente R$ X.XXX mensais"
 
-### 4.3 Líquido Estimado PJ
-- **Faturamento - impostos - custos:** R$ [valor mensal]
-- **Valor líquido anual:** R$ [valor]
+### Dicas rápidas:
+- Sempre dê uma faixa, nunca um valor fixo
+- Pesquise no Glassdoor/Vagas.com antes de negociar
+- Considere benefícios como parte da negociação
 
-## 5. COMPARATIVO CLT vs PJ
-### 5.1 Vantagens CLT:
-- Estabilidade e direitos trabalhistas
-- Benefícios corporativos
-- Férias remuneradas garantidas
-- FGTS e seguro-desemprego
-
-### 5.2 Vantagens PJ:
-- Maior valor líquido (se bem planejado)
-- Flexibilidade fiscal
-- Possibilidade de múltiplos clientes
-- Menor carga tributária (em alguns casos)
-
-## 6. RECOMENDAÇÃO ESTRATÉGICA
-**Para esta vaga específica, recomendo:**
-- **Modalidade preferencial:** [CLT/PJ] - [justificativa]
-- **Faixa de negociação CLT:** R$ [mín] a R$ [máx]
-- **Faixa de negociação PJ:** R$ [mín] a R$ [máx] (valor hora ou mensal)
-
-## 7. ESTRATÉGIAS DE NEGOCIAÇÃO
-### 7.1 Para CLT:
-- Como apresentar a pretensão salarial
-- Momentos ideais para negociar benefícios
-- Argumentos baseados no mercado
-
-### 7.2 Para PJ:
-- Como precificar seu valor/hora
-- Negociação de escopo e prazo
-- Cláusulas contratuais importantes
-
-## 8. DICAS AVANÇADAS
-- **Pesquisa salarial:** Sites e metodologias recomendadas
-- **Fatores de ajuste:** Experiência, localização, urgência da vaga
-- **Negociação win-win:** Como criar valor para ambas as partes
-- **Timing:** Quando e como abordar o tema salário
-
-${langInstruction} [FORMATO OBRIGATÓRIO] Markdown estruturado com todos os cabeçalhos acima. Use valores realistas baseados no mercado brasileiro 2024-2025. Seja específico com números e faixas salariais.`;
+${langInstruction} [FORMATO OBRIGATÓRIO] Markdown exatamente como estruturado acima. Seja direto, use valores realistas do mercado brasileiro atual.`;
                 case 'summary':
                     return `[Persona] Redator Profissional especialista em currículos. [Contexto] Criar um resumo executivo de qualificações focado especificamente na vaga. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Crie um resumo executivo de 3-4 frases que destaque as qualificações mais relevantes do candidato para esta vaga específica. O resumo deve: 1) Mencionar anos de experiência na área relevante; 2) Destacar as 2-3 competências técnicas mais alinhadas com a vaga; 3) Incluir uma conquista quantificada que demonstre impacto; 4) Conectar diretamente o perfil aos requisitos da vaga. ${langInstruction} [Formato da Saída] Parágrafo único em Markdown, conciso e impactante, ideal para usar no topo do currículo.`;
                 default:
