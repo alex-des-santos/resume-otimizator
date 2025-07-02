@@ -242,13 +242,47 @@
                         </div>
                     </div>
                 </div>                <div class="mb-6">
-                    <label for="resumeFile" class="block text-sm font-medium text-gray-700 mb-1">Seu Currículo em PDF</label>
-                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
-                        <div class="space-y-1 text-center">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                            <div class="flex text-sm text-gray-600"><label for="resumeFile" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"><span>Anexar o currículo</span><input id="resumeFile" name="resumeFile" type="file" class="sr-only" accept=".pdf"></label><p class="pl-1">ou arraste e solte</p></div>
-                            <p id="fileName" class="text-xs text-gray-500">Apenas PDF</p>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-sm font-medium text-gray-700">Seu Currículo</label>
+                        <div class="flex bg-gray-100 rounded-lg p-1">
+                            <button id="resumeInputModePdf" class="px-3 py-1 text-xs font-medium rounded-md transition-colors bg-indigo-600 text-white">PDF</button>
+                            <button id="resumeInputModeText" class="px-3 py-1 text-xs font-medium rounded-md transition-colors text-gray-600 hover:text-gray-800">Texto</button>
                         </div>
+                    </div>
+                    
+                    <!-- Modo PDF (padrão) -->
+                    <div id="resumePdfMode">
+                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
+                            <div class="space-y-1 text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                                <div class="flex text-sm text-gray-600"><label for="resumeFile" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"><span>Anexar o currículo</span><input id="resumeFile" name="resumeFile" type="file" class="sr-only" accept=".pdf"></label><p class="pl-1">ou arraste e solte</p></div>
+                                <p id="fileName" class="text-xs text-gray-500">Apenas PDF</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Modo Texto -->
+                    <div id="resumeTextMode" class="hidden">
+                        <textarea id="resumeTextInput" rows="12" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Cole aqui o texto do seu currículo...
+
+Exemplo:
+João Silva
+Desenvolvedor Frontend
+Email: joao@email.com
+Telefone: (11) 99999-9999
+
+EXPERIÊNCIA PROFISSIONAL
+Desenvolvedor Frontend Sênior - Empresa XYZ (2022-2024)
+- Desenvolvimento de interfaces responsivas
+- Trabalho com React, TypeScript e Node.js
+- Liderança de equipe de 3 desenvolvedores
+
+FORMAÇÃO
+Bacharelado em Ciência da Computação - Universidade ABC (2018-2021)
+
+HABILIDADES
+React, JavaScript, TypeScript, HTML, CSS, Git"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">💡 Dica: Inclua experiências, formação, habilidades e informações de contato</p>
                     </div>
                 </div>
 
@@ -518,6 +552,11 @@
         const extractLoader = document.getElementById('extractLoader');
         const extractButtonText = document.getElementById('extractButtonText');
         const resumeFileInput = document.getElementById('resumeFile');
+        const resumeTextInput = document.getElementById('resumeTextInput');
+        const resumeInputModePdfButton = document.getElementById('resumeInputModePdf');
+        const resumeInputModeTextButton = document.getElementById('resumeInputModeText');
+        const resumePdfMode = document.getElementById('resumePdfMode');
+        const resumeTextMode = document.getElementById('resumeTextMode');
         const pdfFileNameInput = document.getElementById('pdfFileName');
         const fileNameDisplay = document.getElementById('fileName');
         const generateButton = document.getElementById('generateButton');
@@ -581,6 +620,7 @@
 
         // --- Event Listeners ---
         resumeFileInput.addEventListener('change', handleFileSelect);
+        resumeTextInput.addEventListener('input', handleTextInput);
         generateButton.addEventListener('click', handleResumeGeneration);
         downloadPdfButton.addEventListener('click', downloadAsPdf);
         closeErrorModalButton.addEventListener('click', () => errorModal.classList.add('hidden'));
@@ -594,6 +634,10 @@
         jobInputModeTextButton.addEventListener('click', () => switchJobInputMode('text'));
         jobInputModeUrlButton.addEventListener('click', () => switchJobInputMode('url'));
         extractJobButton.addEventListener('click', handleJobExtraction);
+        
+        // Resume input mode event listeners
+        resumeInputModePdfButton.addEventListener('click', () => switchResumeInputMode('pdf'));
+        resumeInputModeTextButton.addEventListener('click', () => switchResumeInputMode('text'));
         
         // Sincronizar o campo extraído com o campo principal quando o usuário colar ou digitar
         extractedJobTextInput.addEventListener('input', function() {
@@ -644,6 +688,46 @@
                 
                 jobUrlMode.classList.remove('hidden');
                 jobTextMode.classList.add('hidden');
+            }
+        }
+
+        function switchResumeInputMode(mode) {
+            if (mode === 'pdf') {
+                // Ativar modo PDF
+                resumeInputModePdfButton.classList.add('bg-indigo-600', 'text-white');
+                resumeInputModePdfButton.classList.remove('text-gray-600', 'hover:text-gray-800');
+                resumeInputModeTextButton.classList.remove('bg-indigo-600', 'text-white');
+                resumeInputModeTextButton.classList.add('text-gray-600', 'hover:text-gray-800');
+                
+                resumePdfMode.classList.remove('hidden');
+                resumeTextMode.classList.add('hidden');
+                
+                // Limpar campo de texto se estiver preenchido
+                if (resumeTextInput.value.trim()) {
+                    resumeTextInput.value = '';
+                    resumeText = '';
+                }
+            } else if (mode === 'text') {
+                // Ativar modo Texto
+                resumeInputModeTextButton.classList.add('bg-indigo-600', 'text-white');
+                resumeInputModeTextButton.classList.remove('text-gray-600', 'hover:text-gray-800');
+                resumeInputModePdfButton.classList.remove('bg-indigo-600', 'text-white');
+                resumeInputModePdfButton.classList.add('text-gray-600', 'hover:text-gray-800');
+                
+                resumeTextMode.classList.remove('hidden');
+                resumePdfMode.classList.add('hidden');
+                
+                // Limpar arquivo PDF se estiver selecionado
+                if (resumeFileInput.files.length > 0) {
+                    resumeFileInput.value = '';
+                    resumeText = '';
+                    fileNameDisplay.textContent = 'Nenhum arquivo selecionado';
+                }
+                
+                // Focar no campo de texto
+                setTimeout(() => {
+                    resumeTextInput.focus();
+                }, 100);
             }
         }
 
@@ -1030,9 +1114,28 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
             return fullText;
         }
 
+        function handleTextInput(event) {
+            const textValue = event.target.value.trim();
+            
+            if (textValue) {
+                // Atualizar a variável global com o texto do currículo
+                resumeText = textValue;
+                console.log('Texto do currículo atualizado:', textValue.substring(0, 100) + '...');
+            } else {
+                // Limpar se vazio
+                resumeText = '';
+            }
+        }
+
         async function handleResumeGeneration() {
             try {
                 checkRateLimit();
+                
+                // Garantir que resumeText está atualizado se o modo texto estiver ativo
+                if (!resumeTextMode.classList.contains('hidden')) {
+                    resumeText = resumeTextInput.value.trim();
+                }
+                
                 toggleMainLoader(true);
                 const prompt = getPrompt('optimize');
                 const result = await callGeminiAPI(prompt);
@@ -1072,6 +1175,12 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
             if (button.disabled) return;
             try {
                 checkRateLimit();
+                
+                // Garantir que resumeText está atualizado se o modo texto estiver ativo
+                if (!resumeTextMode.classList.contains('hidden')) {
+                    resumeText = resumeTextInput.value.trim();
+                }
+                
                 toggleFeatureLoader(button, true);
                 const prompt = getPrompt(feature, optimizedMarkdown);
                 const result = await callGeminiAPI(prompt);
@@ -1111,7 +1220,7 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                 let missing = [];
                 if (!apiKey) missing.push("Chave de API");
                 if (!jobDescription) missing.push("Descrição da Vaga");
-                if (!resumeText) missing.push("Currículo em PDF");
+                if (!resumeText) missing.push("Currículo (PDF ou Texto)");
                 throw new Error(`Dados Incompletos. Por favor, preencha: ${missing.join(', ')}.`);
             }
             
