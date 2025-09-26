@@ -1660,18 +1660,27 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                 doc.setFont(options.font || 'Helvetica', options.style || 'normal');
                 doc.setFontSize(options.size || 10);
 
-                const lines = doc.splitTextToSize(text, contentWidth - (options.indent || 0));
-                const lineHeight = doc.internal.getLineHeight() / doc.internal.scaleFactor;
-                const textHeight = lines.length * lineHeight;
+                const lines = doc.splitTextToSize(text, contentWidth - (options.indent || 0) - 20); // Margem adicional
+                const lineHeight = Math.max(doc.internal.getLineHeight() / doc.internal.scaleFactor, (options.size || 10) * 1.2); // Melhor espaçamento
 
-                // Verificar se há espaço na página
-                if (cursorY + textHeight > doc.internal.pageSize.getHeight() - margin) {
-                    doc.addPage();
-                    cursorY = margin;
-                }
-
-                doc.text(lines, margin + (options.indent || 0), cursorY);
-                cursorY += textHeight + (options.spacing || 5);
+                // Adicionar texto linha por linha para melhor controle
+                lines.forEach((line, index) => {
+                    // Verificar espaço antes de cada linha
+                    if (cursorY + lineHeight > doc.internal.pageSize.getHeight() - margin) {
+                        doc.addPage();
+                        cursorY = margin;
+                    }
+                    
+                    doc.text(line, margin + (options.indent || 0), cursorY);
+                    cursorY += lineHeight;
+                    
+                    // Espaçamento adicional entre linhas de texto longo
+                    if (lines.length > 1 && index < lines.length - 1) {
+                        cursorY += 2;
+                    }
+                });
+                
+                cursorY += (options.spacing || 8); // Espaçamento padrão maior
             };
 
             const addSeparator = () => {
@@ -1694,43 +1703,43 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
 
                 switch(tagName) {
                     case 'H1':
-                        addText(textContent, { size: 16, style: 'bold', spacing: 12 });
+                        addText(textContent, { size: 16, style: 'bold', spacing: 16 });
                         break;
                     case 'H2':
-                        addText(textContent, { size: 14, style: 'bold', spacing: 10 });
+                        addText(textContent, { size: 14, style: 'bold', spacing: 14 });
                         break;
                     case 'H3':
-                        addText(textContent, { size: 12, style: 'bold', spacing: 8 });
+                        addText(textContent, { size: 12, style: 'bold', spacing: 12 });
                         break;
                     case 'H4':
-                        addText(textContent, { size: 11, style: 'bold', spacing: 6 });
+                        addText(textContent, { size: 11, style: 'bold', spacing: 10 });
                         break;
                     case 'P':
                         // Verificar se o parágrafo contém elementos em negrito
                         const strongElements = element.querySelectorAll('strong');
                         if (strongElements.length > 0) {
-                            addText(textContent, { size: 10, style: 'bold', spacing: 6 });
+                            addText(textContent, { size: 10, style: 'bold', spacing: 10 });
                         } else {
-                            addText(textContent, { size: 10, style: 'normal', spacing: 6 });
+                            addText(textContent, { size: 10, style: 'normal', spacing: 10 });
                         }
                         break;
                     case 'UL':
                         Array.from(element.querySelectorAll('li')).forEach(li => {
                             const liText = li.textContent.trim();
                             if (liText) {
-                                addText(`• ${liText}`, { size: 10, indent: 20, spacing: 4 });
+                                addText(`• ${liText}`, { size: 10, indent: 20, spacing: 6 });
                             }
                         });
-                        cursorY += 5;
+                        cursorY += 8;
                         break;
                     case 'OL':
                         Array.from(element.querySelectorAll('li')).forEach((li, index) => {
                             const liText = li.textContent.trim();
                             if (liText) {
-                                addText(`${index + 1}. ${liText}`, { size: 10, indent: 20, spacing: 4 });
+                                addText(`${index + 1}. ${liText}`, { size: 10, indent: 20, spacing: 6 });
                             }
                         });
-                        cursorY += 5;
+                        cursorY += 8;
                         break;
                     case 'HR':
                         addSeparator();
@@ -1967,26 +1976,33 @@ ${langInstruction} [FORMATO OBRIGATÓRIO] Markdown exatamente como estruturado a
                 const btn = featureButtons[key];
                 btn.disabled = !isEnabled;
 
-                let currentClasses = btn.className;
-                // Remove old style classes
-                currentClasses = currentClasses.replace(/bg-gradient-to-br[^\s]*|from-[^\s]*|to-[^\s]*|text-[^\s]*|hover:[^\s]*|border-[^\s]*|transform[^\s]*|scale-[^\s]*|shadow-[^\s]*|opacity-[^\s]*/g, '').replace(/\s+/g, ' ').trim();
+                // Remove all style classes first
+                btn.className = btn.className.replace(/bg-gradient-to-br[^\s]*|from-[^\s]*|to-[^\s]*|text-[^\s]*|hover:[^\s]*|border-[^\s]*|transform[^\s]*|scale-[^\s]*|shadow-[^\s]*|opacity-[^\s]*|cursor-[^\s]*/g, '').replace(/\s+/g, ' ').trim();
                 
-                // Apply new styles
-                btn.className = `${currentClasses} ${isEnabled ? enabledBtnClasses : disabledBtnClasses}`;
+                // Preserve layout classes
+                let layoutClasses = '';
+                if (btn.className.includes('md:col-span-2')) layoutClasses += ' md:col-span-2';
+                if (btn.className.includes('lg:col-span-3')) layoutClasses += ' lg:col-span-3';
+                
+                // Apply base classes and state-specific styles
+                btn.className = `${baseBtnClasses}${layoutClasses} ${isEnabled ? enabledBtnClasses : disabledBtnClasses}`;
 
-                if(isEnabled) {
+                if(isEnabled && !btn.hasAttribute('data-original-text')) {
                     btn.setAttribute('data-original-text', btn.innerHTML);
-                    // Add click effect
-                    btn.addEventListener('mouseenter', function() {
-                        if (!this.disabled) {
-                            this.style.transform = 'translateY(-2px) scale(1.02)';
-                        }
-                    });
-                    btn.addEventListener('mouseleave', function() {
-                        if (!this.disabled) {
-                            this.style.transform = 'translateY(0) scale(1)';
-                        }
-                    });
+                    // Add click effect only once
+                    if (!btn.hasEventListeners) {
+                        btn.addEventListener('mouseenter', function() {
+                            if (!this.disabled) {
+                                this.style.transform = 'translateY(-2px) scale(1.02)';
+                            }
+                        });
+                        btn.addEventListener('mouseleave', function() {
+                            if (!this.disabled) {
+                                this.style.transform = 'translateY(0) scale(1)';
+                            }
+                        });
+                        btn.hasEventListeners = true;
+                    }
                 }
             });
         }
