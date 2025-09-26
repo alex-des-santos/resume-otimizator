@@ -6,7 +6,7 @@
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>">
     <!-- CSP mais permissivo para desenvolvimento, mas ainda seguro -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; connect-src 'self' https://generativelanguage.googleapis.com; img-src 'self' data: blob:; worker-src 'self' blob: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https:; connect-src 'self' https://generativelanguage.googleapis.com; img-src 'self' data: blob:; worker-src 'self' blob: https:; script-src 'self' 'unsafe-inline' https:; object-src 'none';">
     <title>ResumeAI Pro - Otimizador de Currículo Inteligente</title>
     <!-- Tailwind CSS - Versão CDN que funciona localmente -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" crossorigin="anonymous">
@@ -19,6 +19,10 @@
             referrerpolicy="no-referrer"></script>
     <!-- marked.js for Markdown to HTML conversion -->
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
+    <!-- DOMPurify for XSS protection -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js" 
             crossorigin="anonymous" 
             referrerpolicy="no-referrer"></script>
     <!-- Google Fonts: Inter -->
@@ -522,9 +526,13 @@ React, JavaScript, TypeScript, HTML, CSS, Git"></textarea>
                             <div class="feature-icon mb-2">💼</div>
                             <span class="font-semibold">Otimizar LinkedIn</span>
                         </button>
+                        <button id="atsScoreButton" class="feature-btn feature-card" disabled>
+                            <div class="feature-icon mb-2">📊</div>
+                            <span class="font-semibold">Score ATS</span>
+                        </button>
                         <button id="analyzeButton" class="feature-btn feature-card" disabled>
                             <div class="feature-icon mb-2">🎯</div>
-                            <span class="font-semibold">Análise de Pontos Fortes</span>
+                            <span class="font-semibold">Análise Completa</span>
                         </button>
                         <button id="questionsButton" class="feature-btn feature-card" disabled>
                             <div class="feature-icon mb-2">❓</div>
@@ -666,20 +674,33 @@ React, JavaScript, TypeScript, HTML, CSS, Git"></textarea>
                 </div>
                 
                 <div>
-                    <h4 class="text-lg font-semibold mb-4">Sobre</h4>
+                    <h4 class="text-lg font-semibold mb-4">Desenvolvedor</h4>
                     <ul class="space-y-2 text-gray-300">
-                        <li><a href="#" class="hover:text-white transition">Como Funciona</a></li>
-                        <li><a href="#" class="hover:text-white transition">Política de Privacidade</a></li>
-                        <li><a href="#" class="hover:text-white transition">Termos de Uso</a></li>
-                        <li><a href="#" class="hover:text-white transition">FAQ</a></li>
+                        <li>
+                            <a href="https://www.linkedin.com/in/alex-des-santos" target="_blank" rel="noopener noreferrer" class="hover:text-white transition flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                                </svg>
+                                Alexandre dos Santos
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://github.com/alex-des-santos/resume-otimizator" target="_blank" rel="noopener noreferrer" class="hover:text-white transition flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                                </svg>
+                                Código no GitHub
+                            </a>
+                        </li>
                         <li><a href="test-complete.html" class="hover:text-white transition">Teste de Sistema</a></li>
+                        <li><a href="#" class="hover:text-white transition">Como Funciona</a></li>
                     </ul>
                 </div>
             </div>
             
             <div class="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
                 <p class="text-gray-400 text-sm">
-                    © 2025 ResumeAI Pro. Todos os direitos reservados.
+                    © 2025 ResumeAI Pro. Desenvolvido por <a href="https://www.linkedin.com/in/alex-des-santos" target="_blank" rel="noopener noreferrer" class="hover:text-white transition">Alexandre dos Santos</a>.
                 </p>
                 <div class="flex items-center space-x-4 mt-4 md:mt-0">
                     <span class="text-gray-400 text-sm">Powered by Google AI</span>
@@ -898,6 +919,7 @@ React, JavaScript, TypeScript, HTML, CSS, Git"></textarea>
         const contentModalBody = document.getElementById('contentModalBody');
         const closeContentModalButton = document.getElementById('closeContentModalButton');
         const featureButtons = {
+            atsScore: document.getElementById('atsScoreButton'),
             analyze: document.getElementById('analyzeButton'),
             questions: document.getElementById('questionsButton'),
             coverLetter: document.getElementById('coverLetterButton'),
@@ -1471,7 +1493,7 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                 // Debug: Log do HTML gerado
                 console.log('HTML gerado:', htmlContent.substring(0, 500) + '...');
                 
-                markdownPreview.innerHTML = htmlContent;
+                markdownPreview.innerHTML = DOMPurify.sanitize(htmlContent);
                 
                 // Forçar re-renderização dos estilos
                 markdownPreview.classList.remove('prose-output');
@@ -1506,7 +1528,8 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                 const prompt = getPrompt(feature, optimizedMarkdown);
                 const result = await callGeminiAPI(prompt);
                 const titles = {
-                    analyze: "Análise de Pontos Fortes e Fracos",
+                    atsScore: "Score de Aderência ATS",
+                    analyze: "Análise Completa de Currículo",
                     questions: "Sugestões para Entrevista",
                     coverLetter: "Rascunho da Carta de Apresentação",
                     linkedin: "Otimização para Perfil do LinkedIn",
@@ -1762,8 +1785,10 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
             switch (type) {
                 case 'optimize':
                     return baseOptimizePrompt;
+                case 'atsScore':
+                    return `[Persona] Especialista em ATS (Applicant Tracking Systems). [Contexto] Calcular score de aderência entre currículo e vaga. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Original:\n\`\`\`${originalResume}\`\`\`\n\nCurrículo Otimizado:\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Compare os currículos e calcule:\n\n## 📊 Score ATS\n\n### Currículo Original: [X]%\n- Palavras-chave encontradas: X/Y\n- Habilidades técnicas: X/Y\n- Experiência relevante: X/Y\n\n### Currículo Otimizado: [Z]%\n- Palavras-chave encontradas: X/Y\n- Habilidades técnicas: X/Y\n- Experiência relevante: X/Y\n\n### 🎯 Melhoria: +[diferença]%\n\n## Detalhamento\n\n### ✅ Palavras-chave Identificadas\n[Lista das principais palavras-chave da vaga encontradas]\n\n### ⚠️ Palavras-chave Ausentes\n[Lista das palavras-chave importantes que ainda faltam]\n\n### 💡 Recomendações\n[3-5 sugestões específicas para melhorar ainda mais o score]\n\n${langInstruction} [Formato da Saída] Markdown.`;
                 case 'analyze':
-                    return `[Persona] Coach de Carreira analítico. [Contexto] Analisar currículo otimizado contra a vaga. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Forneça uma análise em duas seções: "Pontos Fortes" e "Pontos a Melhorar". Seja construtivo e direto. ${langInstruction} [Formato da Saída] Markdown com cabeçalhos.`;
+                    return `[Persona] Coach de Carreira sênior e analista. [Contexto] Análise completa do currículo otimizado. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Forneça análise detalhada em 4 seções:\n\n## 🎯 Pontos Fortes\n[Destaque os elementos mais alinhados com a vaga]\n\n## 🔧 Pontos a Melhorar\n[Sugestões construtivas e específicas]\n\n## 🚀 Diferenciais Competitivos\n[O que torna este perfil único para a vaga]\n\n## 📈 Próximos Passos\n[Ações concretas para fortalecer a candidatura]\n\n${langInstruction} [Formato da Saída] Markdown com cabeçalhos.`;
                 case 'questions':
                     return `[Persona] Gerente de Contratação experiente. [Contexto] Preparar para entrevista. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo do Candidato (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Crie duas listas: "Perguntas que o Entrevistador Pode Fazer" e "Perguntas Inteligentes para Você Fazer". ${langInstruction} [Formato da Saída] Markdown com cabeçalhos.`;
                 case 'coverLetter':
@@ -1977,7 +2002,7 @@ ${langInstruction} [FORMATO OBRIGATÓRIO] Markdown exatamente como estruturado a
             
             // Processar markdown usando a função robusta
             const htmlContent = processMarkdown(markdownContent);
-            contentModalBody.innerHTML = htmlContent;
+            contentModalBody.innerHTML = DOMPurify.sanitize(htmlContent);
             
             contentModal.classList.remove('hidden');
         }
