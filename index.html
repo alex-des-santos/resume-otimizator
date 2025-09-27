@@ -1581,47 +1581,110 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
             const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000); // Timeout de 30 segundos
+            // Sistema de retry com backoff exponencial
+            const maxRetries = 3;
+            let attempt = 0;
+            
+            while (attempt < maxRetries) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 45000); // Timeout maior para retries
 
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'User-Agent': 'Resume-Optimizer/1.0'
-                    },
-                    body: JSON.stringify(payload),
-                    signal: controller.signal
-                });
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'User-Agent': 'Resume-Optimizer/1.0'
+                        },
+                        body: JSON.stringify(payload),
+                        signal: controller.signal
+                    });
 
-                clearTimeout(timeoutId);
+                    clearTimeout(timeoutId);
 
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    const errorMessage = errorData.error?.message || `Erro na API: ${response.status} ${response.statusText}`;
-                    throw new Error(errorMessage);
-                }
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        const errorMessage = errorData.error?.message || `Erro na API: ${response.status} ${response.statusText}`;
+                        
+                        // Verificar se é erro de sobrecarga (retryable)
+                        const isOverloadError = errorMessage.toLowerCase().includes('overloaded') || 
+                                              errorMessage.toLowerCase().includes('quota') ||
+                                              errorMessage.toLowerCase().includes('rate limit') ||
+                                              response.status === 429 || response.status === 503;
+                        
+                        if (isOverloadError && attempt < maxRetries - 1) {
+                            attempt++;
+                            const waitTime = Math.pow(2, attempt) * 1000 + Math.random() * 1000; // Backoff exponencial com jitter
+                            console.log(`Tentativa ${attempt}/${maxRetries} falhou. Aguardando ${Math.round(waitTime/1000)}s...`);
+                            
+                            // Mostrar progresso ao usuário
+                            if (typeof showTemporaryMessage === 'function') {
+                                showTemporaryMessage(`🔄 API ocupada. Tentativa ${attempt}/${maxRetries}... Aguardando ${Math.round(waitTime/1000)}s`);
+                            }
+                            
+                            await new Promise(resolve => setTimeout(resolve, waitTime));
+                            continue;
+                        }
+                        
+                        // Melhorar mensagem para usuário final
+                        if (isOverloadError) {
+                            throw new Error('🔥 A API do Google está muito ocupada no momento. Aguarde alguns minutos e tente novamente. Este erro é temporário e comum em horários de pico.');
+                        }
+                        
+                        throw new Error(errorMessage);
+                    }
 
-                const result = await response.json();
+                    const result = await response.json();
 
-                if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts[0].text) {
-                    const responseText = result.candidates[0].content.parts[0].text;
-                    
-                    // Validação básica da resposta
-                    if (responseText.length > 200000) {
-                        throw new Error('Resposta da API muito longa. Tente novamente.');
+                    if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts[0].text) {
+                        const responseText = result.candidates[0].content.parts[0].text;
+                        
+                        // Validação básica da resposta
+                        if (responseText.length > 200000) {
+                            throw new Error('Resposta da API muito longa. Tente novamente.');
+                        }
+                        
+                        return responseText;
+                    } else {
+                        throw new Error("A API não retornou uma resposta válida. A resposta pode estar bloqueada por políticas de segurança.");
+                    }
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        if (attempt < maxRetries - 1) {
+                            attempt++;
+                            console.log(`Timeout na tentativa ${attempt}/${maxRetries}. Tentando novamente...`);
+                            
+                            // Mostrar progresso ao usuário
+                            if (typeof showTemporaryMessage === 'function') {
+                                showTemporaryMessage(`⏱️ Timeout. Tentativa ${attempt}/${maxRetries}...`);
+                            }
+                            
+                            continue;
+                        }
+                        throw new Error('⏱️ Timeout na conexão. A API está respondendo lentamente. Tente novamente em alguns minutos.');
                     }
                     
-                    return responseText;
-                } else {
-                    throw new Error("A API não retornou uma resposta válida. A resposta pode estar bloqueada por políticas de segurança.");
+                    // Se não for um erro retryable, lançar imediatamente
+                    if (!error.message.includes('overloaded') && !error.message.includes('quota') && !error.message.includes('rate limit')) {
+                        throw error;
+                    }
+                    
+                    // Se chegou ao limite de tentativas
+                    if (attempt >= maxRetries - 1) {
+                        throw error;
+                    }
+                    
+                    attempt++;
+                    const waitTime = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+                    console.log(`Erro na tentativa ${attempt}/${maxRetries}. Aguardando ${Math.round(waitTime/1000)}s...`);
+                    
+                    // Mostrar progresso ao usuário
+                    if (typeof showTemporaryMessage === 'function') {
+                        showTemporaryMessage(`🔄 Erro temporário. Tentativa ${attempt}/${maxRetries}... Aguardando ${Math.round(waitTime/1000)}s`);
+                    }
+                    
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
                 }
-            } catch (error) {
-                if (error.name === 'AbortError') {
-                    throw new Error('Timeout na requisição. Tente novamente.');
-                }
-                throw error;
             }
         }
           function downloadAsPdf() {
@@ -1642,120 +1705,194 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
             }
 
             const doc = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
-
             const pageWidth = doc.internal.pageSize.getWidth();
-            const margin = 40;
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 50;
             const contentWidth = pageWidth - margin * 2;
             let cursorY = margin;
-            doc.setFont('Helvetica', 'normal');
 
-            // Processar o markdown da mesma forma que na visualização
-            const processedMarkdown = processMarkdown(optimizedMarkdown);
-            const tempContainer = document.createElement('div');
-            tempContainer.innerHTML = DOMPurify.sanitize(processedMarkdown);
+            // Usar marked para parsing correto do markdown
+            const tokens = marked.lexer(optimizedMarkdown);
 
+            // Função para adicionar texto com melhor suporte a caracteres especiais
             const addText = (text, options = {}) => {
                 if (!text || text.trim() === '') return;
                 
-                doc.setFont(options.font || 'Helvetica', options.style || 'normal');
-                doc.setFontSize(options.size || 10);
+                // Normalizar e limpar texto para melhor compatibilidade
+                let cleanText = text.normalize('NFC');
+                // Substituir caracteres que podem causar problemas
+                cleanText = cleanText
+                    .replace(/[""]/g, '"')  // Aspas curvas para retas
+                    .replace(/['']/g, "'")  // Apóstrofes curvos para retos
+                    .replace(/[–—]/g, '-')  // Em dash e en dash para hífen
+                    .replace(/…/g, '...')   // Reticências
+                    .replace(/•/g, '-');    // Bullet para hífen
+                
+                const fontSize = options.size || 10;
+                const fontStyle = options.style || 'normal';
+                const indent = options.indent || 0;
+                const spacing = options.spacing || 8;
+                const lineHeight = fontSize * 1.4;
+                
+                doc.setFont('Helvetica', fontStyle);
+                doc.setFontSize(fontSize);
 
-                const lines = doc.splitTextToSize(text, contentWidth - (options.indent || 0) - 20); // Margem adicional
-                const lineHeight = Math.max(doc.internal.getLineHeight() / doc.internal.scaleFactor, (options.size || 10) * 1.2); // Melhor espaçamento
-
-                // Adicionar texto linha por linha para melhor controle
+                // Dividir texto em linhas que cabem na página
+                const lines = doc.splitTextToSize(cleanText, contentWidth - indent - 10);
+                
                 lines.forEach((line, index) => {
-                    // Verificar espaço antes de cada linha
-                    if (cursorY + lineHeight > doc.internal.pageSize.getHeight() - margin) {
+                    // Verificar se precisa de nova página
+                    if (cursorY + lineHeight > pageHeight - margin - 40) {
                         doc.addPage();
                         cursorY = margin;
+                        // Adicionar rodapé na página anterior
+                        addFooter(doc.getCurrentPageInfo().pageNumber - 1);
                     }
                     
-                    doc.text(line, margin + (options.indent || 0), cursorY);
+                    doc.text(line, margin + indent, cursorY);
                     cursorY += lineHeight;
-                    
-                    // Espaçamento adicional entre linhas de texto longo
-                    if (lines.length > 1 && index < lines.length - 1) {
-                        cursorY += 2;
-                    }
                 });
                 
-                cursorY += (options.spacing || 8); // Espaçamento padrão maior
+                cursorY += spacing;
             };
 
-            const addSeparator = () => {
-                if (cursorY + 15 > doc.internal.pageSize.getHeight() - margin) {
+            // Função para adicionar separador de seção profissional
+            const addSectionSeparator = () => {
+                if (cursorY + 25 > pageHeight - margin - 30) {
                     doc.addPage();
                     cursorY = margin;
                 }
-                doc.setDrawColor(180, 180, 180);
-                doc.setLineWidth(0.5);
+                cursorY += 12;
+                doc.setDrawColor(70, 70, 70);
+                doc.setLineWidth(1);
                 doc.line(margin, cursorY, pageWidth - margin, cursorY);
-                cursorY += 15;
+                cursorY += 18;
             };
 
-            // Processar elementos do DOM
-            const processElement = (element) => {
-                const tagName = element.tagName;
-                const textContent = element.textContent.trim();
-
-                if (!textContent && tagName !== 'HR') return;
-
-                switch(tagName) {
-                    case 'H1':
-                        addText(textContent, { size: 16, style: 'bold', spacing: 16 });
+            // Função para processar tokens do marked
+            const processToken = (token, isFirstSection = false) => {
+                switch (token.type) {
+                    case 'heading':
+                        // Espaçamento antes de novos cabeçalhos (exceto o primeiro)
+                        if (!isFirstSection && token.depth <= 2) {
+                            addSectionSeparator();
+                        }
+                        
+                        const headingSizes = {
+                            1: { size: 16, spacing: 18 },
+                            2: { size: 14, spacing: 16 },
+                            3: { size: 12, spacing: 14 },
+                            4: { size: 11, spacing: 12 },
+                            5: { size: 10, spacing: 10 },
+                            6: { size: 10, spacing: 10 }
+                        };
+                        
+                        const headingStyle = headingSizes[token.depth] || headingSizes[6];
+                        addText(token.text, { 
+                            size: headingStyle.size, 
+                            style: 'bold', 
+                            spacing: headingStyle.spacing 
+                        });
                         break;
-                    case 'H2':
-                        addText(textContent, { size: 14, style: 'bold', spacing: 14 });
-                        break;
-                    case 'H3':
-                        addText(textContent, { size: 12, style: 'bold', spacing: 12 });
-                        break;
-                    case 'H4':
-                        addText(textContent, { size: 11, style: 'bold', spacing: 10 });
-                        break;
-                    case 'P':
-                        // Verificar se o parágrafo contém elementos em negrito
-                        const strongElements = element.querySelectorAll('strong');
-                        if (strongElements.length > 0) {
-                            addText(textContent, { size: 10, style: 'bold', spacing: 10 });
+                        
+                    case 'paragraph':
+                        // Detectar se o parágrafo contém texto em negrito
+                        if (token.tokens && token.tokens.some(t => t.type === 'strong')) {
+                            addText(token.text, { size: 10, style: 'bold', spacing: 10 });
                         } else {
-                            addText(textContent, { size: 10, style: 'normal', spacing: 10 });
+                            addText(token.text, { size: 10, spacing: 10 });
                         }
                         break;
-                    case 'UL':
-                        Array.from(element.querySelectorAll('li')).forEach(li => {
-                            const liText = li.textContent.trim();
-                            if (liText) {
-                                addText(`• ${liText}`, { size: 10, indent: 20, spacing: 6 });
-                            }
+                        
+                    case 'list':
+                        token.items.forEach((item, index) => {
+                            // Usar hífen ASCII para máxima compatibilidade
+                            const bullet = token.ordered ? `${index + 1}.` : '-';
+                            const itemText = (item.text || '').replace(/•/g, '-'); // Forçar hífen
+                            addText(`${bullet} ${itemText}`, { 
+                                size: 10, 
+                                indent: 20, 
+                                spacing: 6 
+                            });
                         });
-                        cursorY += 8;
+                        cursorY += 8; // Espaçamento após lista
                         break;
-                    case 'OL':
-                        Array.from(element.querySelectorAll('li')).forEach((li, index) => {
-                            const liText = li.textContent.trim();
-                            if (liText) {
-                                addText(`${index + 1}. ${liText}`, { size: 10, indent: 20, spacing: 6 });
-                            }
+                        
+                    case 'hr':
+                        addSectionSeparator();
+                        break;
+                        
+                    case 'blockquote':
+                        addText(token.text, { 
+                            size: 10, 
+                            style: 'italic', 
+                            indent: 20, 
+                            spacing: 10 
                         });
-                        cursorY += 8;
                         break;
-                    case 'HR':
-                        addSeparator();
+                        
+                    case 'space':
+                        cursorY += 6; // Espaçamento para quebras de linha
                         break;
-                    case 'BLOCKQUOTE':
-                        addText(textContent, { size: 10, style: 'italic', indent: 20, spacing: 8 });
-                        break;
+                        
                     default:
-                        if (textContent) {
-                            addText(textContent, { size: 10, spacing: 4 });
+                        if (token.text && token.text.trim()) {
+                            addText(token.text, { size: 10, spacing: 8 });
                         }
                 }
             };
 
-            // Processar todos os elementos filhos
-            Array.from(tempContainer.children).forEach(processElement);
+            // Processar todos os tokens
+            let isFirstToken = true;
+            tokens.forEach(token => {
+                processToken(token, isFirstToken);
+                // Só o primeiro token de cabeçalho principal não tem separador
+                if (isFirstToken && token.type === 'heading' && token.depth <= 2) {
+                    isFirstToken = false;
+                }
+            });
+
+            // Função para adicionar rodapé profissional com data
+            const addFooter = (pageNumber = null) => {
+                const currentPage = pageNumber || doc.getCurrentPageInfo().pageNumber;
+                const originalPage = doc.getCurrentPageInfo().pageNumber;
+                
+                if (pageNumber) {
+                    doc.setPage(pageNumber);
+                }
+                
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('pt-BR');
+                
+                // Salvar configurações atuais
+                const originalFontSize = doc.internal.getFontSize();
+                const originalFont = doc.getFont();
+                
+                doc.setFontSize(8);
+                doc.setFont('Helvetica', 'normal');
+                doc.setTextColor(120, 120, 120);
+                
+                const footerText = `Gerado em ${dateStr} - ResumeAI Pro`;
+                const textWidth = doc.getTextWidth(footerText);
+                const xPosition = (pageWidth - textWidth) / 2; // Centralizado
+                
+                doc.text(footerText, xPosition, pageHeight - 25);
+                
+                // Restaurar configurações originais
+                doc.setFontSize(originalFontSize);
+                doc.setFont(originalFont.fontName, originalFont.fontStyle);
+                doc.setTextColor(0, 0, 0); // Preto
+                
+                if (pageNumber) {
+                    doc.setPage(originalPage);
+                }
+            };
+
+            // Adicionar rodapé em todas as páginas ao final
+            const totalPages = doc.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                addFooter(i);
+            }
 
             doc.save(fileName);
         }
@@ -2011,6 +2148,27 @@ ${langInstruction} [FORMATO OBRIGATÓRIO] Markdown exatamente como estruturado a
             errorModalTitle.textContent = title;
             errorModalMessage.textContent = message;
             errorModal.classList.remove('hidden');
+        }
+
+        function showTemporaryMessage(message, duration = 3000) {
+            // Remover mensagem anterior se existir
+            const existing = document.getElementById('temp-message');
+            if (existing) existing.remove();
+            
+            // Criar nova mensagem temporária
+            const tempDiv = document.createElement('div');
+            tempDiv.id = 'temp-message';
+            tempDiv.className = 'fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium animate-pulse';
+            tempDiv.textContent = message;
+            
+            document.body.appendChild(tempDiv);
+            
+            // Remover automaticamente após o tempo especificado
+            setTimeout(() => {
+                if (tempDiv.parentNode) {
+                    tempDiv.remove();
+                }
+            }, duration);
         }
 
         function showContentModal(title, markdownContent) {
