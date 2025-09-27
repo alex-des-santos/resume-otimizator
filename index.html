@@ -1581,47 +1581,110 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
             const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000); // Timeout de 30 segundos
+            // Sistema de retry com backoff exponencial
+            const maxRetries = 3;
+            let attempt = 0;
+            
+            while (attempt < maxRetries) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 45000); // Timeout maior para retries
 
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'User-Agent': 'Resume-Optimizer/1.0'
-                    },
-                    body: JSON.stringify(payload),
-                    signal: controller.signal
-                });
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'User-Agent': 'Resume-Optimizer/1.0'
+                        },
+                        body: JSON.stringify(payload),
+                        signal: controller.signal
+                    });
 
-                clearTimeout(timeoutId);
+                    clearTimeout(timeoutId);
 
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    const errorMessage = errorData.error?.message || `Erro na API: ${response.status} ${response.statusText}`;
-                    throw new Error(errorMessage);
-                }
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        const errorMessage = errorData.error?.message || `Erro na API: ${response.status} ${response.statusText}`;
+                        
+                        // Verificar se é erro de sobrecarga (retryable)
+                        const isOverloadError = errorMessage.toLowerCase().includes('overloaded') || 
+                                              errorMessage.toLowerCase().includes('quota') ||
+                                              errorMessage.toLowerCase().includes('rate limit') ||
+                                              response.status === 429 || response.status === 503;
+                        
+                        if (isOverloadError && attempt < maxRetries - 1) {
+                            attempt++;
+                            const waitTime = Math.pow(2, attempt) * 1000 + Math.random() * 1000; // Backoff exponencial com jitter
+                            console.log(`Tentativa ${attempt}/${maxRetries} falhou. Aguardando ${Math.round(waitTime/1000)}s...`);
+                            
+                            // Mostrar progresso ao usuário
+                            if (typeof showTemporaryMessage === 'function') {
+                                showTemporaryMessage(`🔄 API ocupada. Tentativa ${attempt}/${maxRetries}... Aguardando ${Math.round(waitTime/1000)}s`);
+                            }
+                            
+                            await new Promise(resolve => setTimeout(resolve, waitTime));
+                            continue;
+                        }
+                        
+                        // Melhorar mensagem para usuário final
+                        if (isOverloadError) {
+                            throw new Error('🔥 A API do Google está muito ocupada no momento. Aguarde alguns minutos e tente novamente. Este erro é temporário e comum em horários de pico.');
+                        }
+                        
+                        throw new Error(errorMessage);
+                    }
 
-                const result = await response.json();
+                    const result = await response.json();
 
-                if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts[0].text) {
-                    const responseText = result.candidates[0].content.parts[0].text;
-                    
-                    // Validação básica da resposta
-                    if (responseText.length > 200000) {
-                        throw new Error('Resposta da API muito longa. Tente novamente.');
+                    if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts[0].text) {
+                        const responseText = result.candidates[0].content.parts[0].text;
+                        
+                        // Validação básica da resposta
+                        if (responseText.length > 200000) {
+                            throw new Error('Resposta da API muito longa. Tente novamente.');
+                        }
+                        
+                        return responseText;
+                    } else {
+                        throw new Error("A API não retornou uma resposta válida. A resposta pode estar bloqueada por políticas de segurança.");
+                    }
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        if (attempt < maxRetries - 1) {
+                            attempt++;
+                            console.log(`Timeout na tentativa ${attempt}/${maxRetries}. Tentando novamente...`);
+                            
+                            // Mostrar progresso ao usuário
+                            if (typeof showTemporaryMessage === 'function') {
+                                showTemporaryMessage(`⏱️ Timeout. Tentativa ${attempt}/${maxRetries}...`);
+                            }
+                            
+                            continue;
+                        }
+                        throw new Error('⏱️ Timeout na conexão. A API está respondendo lentamente. Tente novamente em alguns minutos.');
                     }
                     
-                    return responseText;
-                } else {
-                    throw new Error("A API não retornou uma resposta válida. A resposta pode estar bloqueada por políticas de segurança.");
+                    // Se não for um erro retryable, lançar imediatamente
+                    if (!error.message.includes('overloaded') && !error.message.includes('quota') && !error.message.includes('rate limit')) {
+                        throw error;
+                    }
+                    
+                    // Se chegou ao limite de tentativas
+                    if (attempt >= maxRetries - 1) {
+                        throw error;
+                    }
+                    
+                    attempt++;
+                    const waitTime = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+                    console.log(`Erro na tentativa ${attempt}/${maxRetries}. Aguardando ${Math.round(waitTime/1000)}s...`);
+                    
+                    // Mostrar progresso ao usuário
+                    if (typeof showTemporaryMessage === 'function') {
+                        showTemporaryMessage(`🔄 Erro temporário. Tentativa ${attempt}/${maxRetries}... Aguardando ${Math.round(waitTime/1000)}s`);
+                    }
+                    
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
                 }
-            } catch (error) {
-                if (error.name === 'AbortError') {
-                    throw new Error('Timeout na requisição. Tente novamente.');
-                }
-                throw error;
             }
         }
           function downloadAsPdf() {
@@ -2011,6 +2074,27 @@ ${langInstruction} [FORMATO OBRIGATÓRIO] Markdown exatamente como estruturado a
             errorModalTitle.textContent = title;
             errorModalMessage.textContent = message;
             errorModal.classList.remove('hidden');
+        }
+
+        function showTemporaryMessage(message, duration = 3000) {
+            // Remover mensagem anterior se existir
+            const existing = document.getElementById('temp-message');
+            if (existing) existing.remove();
+            
+            // Criar nova mensagem temporária
+            const tempDiv = document.createElement('div');
+            tempDiv.id = 'temp-message';
+            tempDiv.className = 'fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium animate-pulse';
+            tempDiv.textContent = message;
+            
+            document.body.appendChild(tempDiv);
+            
+            // Remover automaticamente após o tempo especificado
+            setTimeout(() => {
+                if (tempDiv.parentNode) {
+                    tempDiv.remove();
+                }
+            }, duration);
         }
 
         function showContentModal(title, markdownContent) {
