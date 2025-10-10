@@ -1721,6 +1721,42 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
             // Usar marked para parsing correto do markdown
             const tokens = marked.lexer(optimizedMarkdown);
 
+            // Função para adicionar rodapé profissional com data
+            const addFooter = (pageNumber = null) => {
+                const currentPage = pageNumber || doc.getCurrentPageInfo().pageNumber;
+                const originalPage = doc.getCurrentPageInfo().pageNumber;
+
+                if (pageNumber) {
+                    doc.setPage(pageNumber);
+                }
+
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('pt-BR');
+
+                // Salvar configurações atuais
+                const originalFontSize = doc.internal.getFontSize();
+                const originalFont = doc.getFont();
+
+                doc.setFontSize(8);
+                doc.setFont('Helvetica', 'normal');
+                doc.setTextColor(120, 120, 120);
+
+                const footerText = `Gerado em ${dateStr} - ResumeAI Pro`;
+                const textWidth = doc.getTextWidth(footerText);
+                const xPosition = (pageWidth - textWidth) / 2; // Centralizado
+
+                doc.text(footerText, xPosition, pageHeight - 25);
+
+                // Restaurar configurações originais
+                doc.setFontSize(originalFontSize);
+                doc.setFont(originalFont.fontName, originalFont.fontStyle);
+                doc.setTextColor(0, 0, 0); // Preto
+
+                if (pageNumber) {
+                    doc.setPage(originalPage);
+                }
+            };
+
             // Função para adicionar texto com melhor suporte a caracteres especiais
             const addText = (text, options = {}) => {
                 if (!text || text.trim() === '') return;
@@ -1858,42 +1894,6 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                     isFirstToken = false;
                 }
             });
-
-            // Função para adicionar rodapé profissional com data
-            const addFooter = (pageNumber = null) => {
-                const currentPage = pageNumber || doc.getCurrentPageInfo().pageNumber;
-                const originalPage = doc.getCurrentPageInfo().pageNumber;
-                
-                if (pageNumber) {
-                    doc.setPage(pageNumber);
-                }
-                
-                const now = new Date();
-                const dateStr = now.toLocaleDateString('pt-BR');
-                
-                // Salvar configurações atuais
-                const originalFontSize = doc.internal.getFontSize();
-                const originalFont = doc.getFont();
-                
-                doc.setFontSize(8);
-                doc.setFont('Helvetica', 'normal');
-                doc.setTextColor(120, 120, 120);
-                
-                const footerText = `Gerado em ${dateStr} - ResumeAI Pro`;
-                const textWidth = doc.getTextWidth(footerText);
-                const xPosition = (pageWidth - textWidth) / 2; // Centralizado
-                
-                doc.text(footerText, xPosition, pageHeight - 25);
-                
-                // Restaurar configurações originais
-                doc.setFontSize(originalFontSize);
-                doc.setFont(originalFont.fontName, originalFont.fontStyle);
-                doc.setTextColor(0, 0, 0); // Preto
-                
-                if (pageNumber) {
-                    doc.setPage(originalPage);
-                }
-            };
 
             // Adicionar rodapé em todas as páginas ao final
             const totalPages = doc.getNumberOfPages();
