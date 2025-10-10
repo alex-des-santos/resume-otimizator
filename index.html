@@ -1722,14 +1722,7 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
             const tokens = marked.lexer(optimizedMarkdown);
 
             // Função para adicionar rodapé profissional com data
-            const addFooter = (pageNumber = null) => {
-                const currentPage = pageNumber || doc.getCurrentPageInfo().pageNumber;
-                const originalPage = doc.getCurrentPageInfo().pageNumber;
-
-                if (pageNumber) {
-                    doc.setPage(pageNumber);
-                }
-
+            const addFooter = () => {
                 const now = new Date();
                 const dateStr = now.toLocaleDateString('pt-BR');
 
@@ -1742,19 +1735,16 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                 doc.setTextColor(120, 120, 120);
 
                 const footerText = `Gerado em ${dateStr} - ResumeAI Pro`;
-                const textWidth = doc.getTextWidth(footerText);
-                const xPosition = (pageWidth - textWidth) / 2; // Centralizado
 
-                doc.text(footerText, xPosition, pageHeight - 25);
+                doc.text(footerText, pageWidth / 2, pageHeight - 25, {
+                    align: 'center',
+                    encoding: 'WinAnsi'
+                });
 
                 // Restaurar configurações originais
                 doc.setFontSize(originalFontSize);
                 doc.setFont(originalFont.fontName, originalFont.fontStyle);
-                doc.setTextColor(0, 0, 0); // Preto
-
-                if (pageNumber) {
-                    doc.setPage(originalPage);
-                }
+                doc.setTextColor(0, 0, 0);
             };
 
             // Função para adicionar texto com melhor suporte a caracteres especiais
@@ -1786,16 +1776,17 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                 // Dividir texto em linhas que cabem na página
                 const lines = doc.splitTextToSize(cleanText, contentWidth - indent - 10);
 
-                lines.forEach((line, index) => {
+                lines.forEach((line) => {
                     // Verificar se precisa de nova página
                     if (cursorY + lineHeight > pageHeight - margin - 40) {
+                        addFooter();
                         doc.addPage();
                         cursorY = margin;
-                        // Adicionar rodapé na página anterior
-                        addFooter(doc.getCurrentPageInfo().pageNumber - 1);
                     }
 
-                    doc.text(line, margin + indent, cursorY);
+                    doc.text(line, margin + indent, cursorY, {
+                        encoding: 'WinAnsi'
+                    });
                     cursorY += lineHeight;
                 });
 
@@ -1910,11 +1901,8 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                 }
             });
 
-            // Adicionar rodapé em todas as páginas ao final
-            const totalPages = doc.getNumberOfPages();
-            for (let i = 1; i <= totalPages; i++) {
-                addFooter(i);
-            }
+            // Adicionar rodapé na última página após processar todo o conteúdo
+            addFooter();
 
             doc.save(fileName);
         }
