@@ -1760,29 +1760,32 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
             // Função para adicionar texto com melhor suporte a caracteres especiais
             const addText = (text, options = {}) => {
                 if (!text || text.trim() === '') return;
-                
+
                 // Normalizar e limpar texto para melhor compatibilidade
                 let cleanText = text.normalize('NFC');
-                // Substituir caracteres que podem causar problemas
+                // Remover marcações markdown que não foram processadas
                 cleanText = cleanText
-                    .replace(/[""]/g, '"')  // Aspas curvas para retas
-                    .replace(/['']/g, "'")  // Apóstrofes curvos para retos
-                    .replace(/[–—]/g, '-')  // Em dash e en dash para hífen
-                    .replace(/…/g, '...')   // Reticências
-                    .replace(/•/g, '-');    // Bullet para hífen
-                
+                    .replace(/\*\*([^*]+)\*\*/g, '$1')  // Remover **negrito**
+                    .replace(/\*([^*]+)\*/g, '$1')      // Remover *itálico*
+                    .replace(/[""]/g, '"')              // Aspas curvas para retas
+                    .replace(/['']/g, "'")              // Apóstrofes curvos para retos
+                    .replace(/[–—]/g, '-')              // Em dash e en dash para hífen
+                    .replace(/…/g, '...')               // Reticências
+                    .replace(/•/g, '* ')                // Bullet
+                    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1'); // Links [texto](url) -> texto
+
                 const fontSize = options.size || 10;
                 const fontStyle = options.style || 'normal';
                 const indent = options.indent || 0;
                 const spacing = options.spacing || 8;
-                const lineHeight = fontSize * 1.4;
-                
+                const lineHeight = fontSize * 1.5;
+
                 doc.setFont('Helvetica', fontStyle);
                 doc.setFontSize(fontSize);
 
                 // Dividir texto em linhas que cabem na página
                 const lines = doc.splitTextToSize(cleanText, contentWidth - indent - 10);
-                
+
                 lines.forEach((line, index) => {
                     // Verificar se precisa de nova página
                     if (cursorY + lineHeight > pageHeight - margin - 40) {
@@ -1791,11 +1794,11 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                         // Adicionar rodapé na página anterior
                         addFooter(doc.getCurrentPageInfo().pageNumber - 1);
                     }
-                    
+
                     doc.text(line, margin + indent, cursorY);
                     cursorY += lineHeight;
                 });
-                
+
                 cursorY += spacing;
             };
 
@@ -1820,45 +1823,56 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                         if (!isFirstSection && token.depth <= 2) {
                             addSectionSeparator();
                         }
-                        
+
                         const headingSizes = {
-                            1: { size: 16, spacing: 18 },
-                            2: { size: 14, spacing: 16 },
-                            3: { size: 12, spacing: 14 },
-                            4: { size: 11, spacing: 12 },
-                            5: { size: 10, spacing: 10 },
-                            6: { size: 10, spacing: 10 }
+                            1: { size: 18, spacing: 14 },
+                            2: { size: 14, spacing: 12 },
+                            3: { size: 12, spacing: 10 },
+                            4: { size: 11, spacing: 8 },
+                            5: { size: 10, spacing: 6 },
+                            6: { size: 10, spacing: 6 }
                         };
-                        
+
                         const headingStyle = headingSizes[token.depth] || headingSizes[6];
-                        addText(token.text, { 
-                            size: headingStyle.size, 
-                            style: 'bold', 
-                            spacing: headingStyle.spacing 
+                        addText(token.text, {
+                            size: headingStyle.size,
+                            style: 'bold',
+                            spacing: headingStyle.spacing
                         });
                         break;
-                        
+
                     case 'paragraph':
-                        // Detectar se o parágrafo contém texto em negrito
-                        if (token.tokens && token.tokens.some(t => t.type === 'strong')) {
-                            addText(token.text, { size: 10, style: 'bold', spacing: 10 });
-                        } else {
-                            addText(token.text, { size: 10, spacing: 10 });
+                        // Processar texto do parágrafo removendo marcações markdown inline
+                        let paraText = token.text;
+                        let paraStyle = 'normal';
+
+                        // Se todo o parágrafo é negrito, aplicar negrito
+                        if (paraText.startsWith('**') && paraText.endsWith('**')) {
+                            paraStyle = 'bold';
+                            paraText = paraText.replace(/^\*\*|\*\*$/g, '');
                         }
+
+                        addText(paraText, { size: 10, style: paraStyle, spacing: 8 });
                         break;
                         
                     case 'list':
                         token.items.forEach((item, index) => {
-                            // Usar hífen ASCII para máxima compatibilidade
-                            const bullet = token.ordered ? `${index + 1}.` : '-';
-                            const itemText = (item.text || '').replace(/•/g, '-'); // Forçar hífen
-                            addText(`${bullet} ${itemText}`, { 
-                                size: 10, 
-                                indent: 20, 
-                                spacing: 6 
+                            const bullet = token.ordered ? `${index + 1}.` : '•';
+                            let itemText = item.text || '';
+
+                            // Remover marcações markdown do item
+                            itemText = itemText
+                                .replace(/\*\*([^*]+)\*\*/g, '$1')
+                                .replace(/\*([^*]+)\*/g, '$1')
+                                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+
+                            addText(`${bullet} ${itemText}`, {
+                                size: 10,
+                                indent: 15,
+                                spacing: 4
                             });
                         });
-                        cursorY += 8; // Espaçamento após lista
+                        cursorY += 6; // Espaçamento após lista
                         break;
                         
                     case 'hr':
