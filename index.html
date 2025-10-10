@@ -2016,10 +2016,71 @@ ${langInstruction} [FORMATO OBRIGATÓRIO] Markdown exatamente como estruturado a
         }
 
 
+        function toTitleCase(text) {
+            if (!text) return '';
+            const lower = text.toLowerCase();
+            const smallWords = new Set(['de', 'da', 'do', 'das', 'dos', 'e']);
+            return lower
+                .split(' ')
+                .filter(Boolean)
+                .map((word, index) => {
+                    if (smallWords.has(word) && index !== 0) {
+                        return word;
+                    }
+                    return word.charAt(0).toUpperCase() + word.slice(1);
+                })
+                .join(' ');
+        }
+
+        function sanitizeFileNameBase(name) {
+            return name
+                .replace(/[<>:"/\\|?*]+/g, '')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .substring(0, 120);
+        }
+
+        function normalizeSegment(segment) {
+            if (!segment) return '';
+            return toTitleCase(
+                segment
+                    .replace(/[\u2010-\u2015]/g, '-')
+                    .replace(/\s+/g, ' ')
+                    .replace(/\s*[-–—]\s*$/g, '')
+                    .replace(/\s*\(.*\)$/, '')
+                    .replace(/\s*\d+$/, '')
+                    .trim()
+            );
+        }
+
+        function buildHumanReadableName(jobDesc) {
+            const lines = jobDesc
+                .split(/\r?\n/)
+                .map(line => line.trim())
+                .filter(Boolean);
+
+            const candidateLine = lines.find(line => /[-–—]/.test(line)) || lines[0];
+
+            if (candidateLine) {
+                const match = candidateLine.match(/^(.+?)\s*[-–—]\s*(.+)$/);
+                if (match) {
+                    const role = normalizeSegment(match[1]);
+                    const company = normalizeSegment(match[2]);
+
+                    if (role && company) {
+                        const baseName = `${role} - ${company}`;
+                        return sanitizeFileNameBase(baseName);
+                    }
+                }
+            }
+
+            return '';
+        }
+
         function generateFileNameFromJobDescription() {
             // Obter descrição da vaga do campo ativo
             let jobDesc;
-                       if (jobUrlMode.classList.contains('hidden')) {
+            if (jobUrlMode.classList.contains('hidden')) {
                 // Modo texto ativo
                 jobDesc = jobDescriptionInput.value.trim();
             } else {
@@ -2031,10 +2092,18 @@ ${langInstruction} [FORMATO OBRIGATÓRIO] Markdown exatamente como estruturado a
                 return 'curriculo-otimizado';
             }
 
+            const humanReadable = buildHumanReadableName(jobDesc);
+            if (humanReadable) {
+                return humanReadable;
+            }
+
             let fileName = jobDesc
                 .toLowerCase()
                 .replace(/[^\w\s-]/g, '')
                 .replace(/\s+/g, '-')
+                .replace(/-+\d+$/g, '')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '')
                 .substring(0, 100);
 
             const jobTitlePatterns = [
@@ -2056,8 +2125,11 @@ ${langInstruction} [FORMATO OBRIGATÓRIO] Markdown exatamente como estruturado a
                     const extractedTitle = match[1]
                         .trim()
                         .toLowerCase()
-                        .replace(/[^\w\s]/g, '')
+                        .replace(/[^\w\s-]/g, '')
                         .replace(/\s+/g, '-')
+                        .replace(/-+\d+$/g, '')
+                        .replace(/-+/g, '-')
+                        .replace(/^-|-$/g, '')
                         .substring(0, 50);
 
                     if (extractedTitle.length > 3) {
@@ -2067,7 +2139,8 @@ ${langInstruction} [FORMATO OBRIGATÓRIO] Markdown exatamente como estruturado a
             }
 
             const words = fileName.split('-').filter(word => word.length > 2).slice(0, 5);
-            return words.length > 0 ? `curriculo-${words.join('-')}` : 'curriculo-otimizado';
+            const fallback = words.length > 0 ? `curriculo-${words.join('-')}` : 'curriculo-otimizado';
+            return fallback;
         }
 
         function sanitizeForPrompt(text) {
