@@ -25,6 +25,10 @@
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js" 
             crossorigin="anonymous" 
             referrerpolicy="no-referrer"></script>
+    <!-- html2canvas para renderização fiel na geração de PDF -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1693,8 +1697,8 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                     await new Promise(resolve => setTimeout(resolve, waitTime));
                 }
             }
-        }
-          function downloadAsPdf() {
+                }
+                    async function downloadAsPdf() {
             if (!optimizedMarkdown) {
                 showError('Nenhum Conteúdo', 'Não há currículo gerado para baixar.');
                 return;
@@ -1714,197 +1718,65 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
             const doc = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
-            const margin = 50;
-            const contentWidth = pageWidth - margin * 2;
-            let cursorY = margin;
+            const margin = 40;
+            const ptToPx = (pt) => pt * (96 / 72);
+            const contentWidthPt = pageWidth - margin * 2;
+            const contentWidthPx = ptToPx(contentWidthPt);
 
-            // Usar marked para parsing correto do markdown
-            const tokens = marked.lexer(optimizedMarkdown);
+            const processedHtml = processMarkdown(optimizedMarkdown);
+            const sanitizedHtml = DOMPurify.sanitize(processedHtml);
 
-            // Função para adicionar rodapé profissional com data
-            const addFooter = () => {
+            const tempContainer = document.createElement('div');
+            tempContainer.id = 'pdf-temp-container';
+            tempContainer.style.position = 'fixed';
+            tempContainer.style.left = '-10000px';
+            tempContainer.style.top = '0';
+            tempContainer.style.width = `${contentWidthPx}px`;
+            tempContainer.style.padding = '0';
+            tempContainer.style.backgroundColor = '#ffffff';
+            tempContainer.style.color = '#1a202c';
+            tempContainer.style.fontFamily = getComputedStyle(document.body).fontFamily;
+            tempContainer.classList.add('prose-output');
+            tempContainer.innerHTML = sanitizedHtml;
+
+            document.body.appendChild(tempContainer);
+
+            try {
+                await doc.html(tempContainer, {
+                    x: margin,
+                    y: margin,
+                    width: contentWidthPt,
+                    windowWidth: tempContainer.scrollWidth,
+                    html2canvas: {
+                        scale: 0.75,
+                        useCORS: true,
+                        allowTaint: false,
+                        backgroundColor: '#ffffff'
+                    },
+                    autoPaging: 'text'
+                });
+
                 const now = new Date();
                 const dateStr = now.toLocaleDateString('pt-BR');
-
-                // Salvar configurações atuais
-                const originalFontSize = doc.internal.getFontSize();
-                const originalFont = doc.getFont();
-
-                doc.setFontSize(8);
-                doc.setFont('Helvetica', 'normal');
-                doc.setTextColor(120, 120, 120);
-
                 const footerText = `Gerado em ${dateStr} - ResumeAI Pro`;
 
-                doc.text(footerText, pageWidth / 2, pageHeight - 25, {
-                    align: 'center',
-                    encoding: 'WinAnsi'
-                });
+                doc.setFont('Helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.setTextColor(120, 120, 120);
 
-                // Restaurar configurações originais
-                doc.setFontSize(originalFontSize);
-                doc.setFont(originalFont.fontName, originalFont.fontStyle);
-                doc.setTextColor(0, 0, 0);
-            };
-
-            // Função para adicionar texto com melhor suporte a caracteres especiais
-            const addText = (text, options = {}) => {
-                if (!text || text.trim() === '') return;
-
-                // Normalizar e limpar texto para melhor compatibilidade
-                let cleanText = text.normalize('NFC');
-                // Remover marcações markdown que não foram processadas
-                cleanText = cleanText
-                    .replace(/\*\*([^*]+)\*\*/g, '$1')  // Remover **negrito**
-                    .replace(/\*([^*]+)\*/g, '$1')      // Remover *itálico*
-                    .replace(/[""]/g, '"')              // Aspas curvas para retas
-                    .replace(/['']/g, "'")              // Apóstrofes curvos para retos
-                    .replace(/[–—]/g, '-')              // Em dash e en dash para hífen
-                    .replace(/…/g, '...')               // Reticências
-                    .replace(/•/g, '* ')                // Bullet
-                    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1'); // Links [texto](url) -> texto
-
-                const fontSize = options.size || 10;
-                const fontStyle = options.style || 'normal';
-                const indent = options.indent || 0;
-                const spacing = options.spacing || 4;
-                const lineHeight = fontSize * 1.3;
-
-                doc.setFont('Helvetica', fontStyle);
-                doc.setFontSize(fontSize);
-
-                // Dividir texto em linhas que cabem na página
-                const lines = doc.splitTextToSize(cleanText, contentWidth - indent - 10);
-
-                lines.forEach((line) => {
-                    // Verificar se precisa de nova página
-                    if (cursorY + lineHeight > pageHeight - margin - 40) {
-                        addFooter();
-                        doc.addPage();
-                        cursorY = margin;
-                    }
-
-                    doc.text(line, margin + indent, cursorY, {
-                        encoding: 'WinAnsi'
-                    });
-                    cursorY += lineHeight;
-                });
-
-                cursorY += spacing;
-            };
-
-            // Função para adicionar separador de seção profissional
-            const addSectionSeparator = () => {
-                if (cursorY + 25 > pageHeight - margin - 30) {
-                    doc.addPage();
-                    cursorY = margin;
+                const totalPages = doc.getNumberOfPages();
+                for (let i = 1; i <= totalPages; i++) {
+                    doc.setPage(i);
+                    doc.text(footerText, pageWidth / 2, pageHeight - 20, { align: 'center' });
                 }
-                cursorY += 12;
-                doc.setDrawColor(70, 70, 70);
-                doc.setLineWidth(1);
-                doc.line(margin, cursorY, pageWidth - margin, cursorY);
-                cursorY += 18;
-            };
 
-            // Função para processar tokens do marked
-            const processToken = (token, isFirstSection = false) => {
-                switch (token.type) {
-                    case 'heading':
-                        // Espaçamento antes de novos cabeçalhos (não usar separador, só espaço)
-                        if (!isFirstSection && token.depth <= 2) {
-                            cursorY += 8;
-                        }
-
-                        const headingSizes = {
-                            1: { size: 16, spacing: 8 },
-                            2: { size: 12, spacing: 8 },
-                            3: { size: 11, spacing: 6 },
-                            4: { size: 10, spacing: 5 },
-                            5: { size: 10, spacing: 4 },
-                            6: { size: 10, spacing: 4 }
-                        };
-
-                        const headingStyle = headingSizes[token.depth] || headingSizes[6];
-                        addText(token.text, {
-                            size: headingStyle.size,
-                            style: 'bold',
-                            spacing: headingStyle.spacing
-                        });
-                        break;
-
-                    case 'paragraph':
-                        // Processar texto do parágrafo removendo marcações markdown inline
-                        let paraText = token.text;
-                        let paraStyle = 'normal';
-
-                        // Se todo o parágrafo é negrito, aplicar negrito
-                        if (paraText.startsWith('**') && paraText.endsWith('**')) {
-                            paraStyle = 'bold';
-                            paraText = paraText.replace(/^\*\*|\*\*$/g, '');
-                        }
-
-                        addText(paraText, { size: 10, style: paraStyle, spacing: 4 });
-                        break;
-                        
-                    case 'list':
-                        token.items.forEach((item, index) => {
-                            const bullet = token.ordered ? `${index + 1}.` : '•';
-                            let itemText = item.text || '';
-
-                            // Remover marcações markdown do item
-                            itemText = itemText
-                                .replace(/\*\*([^*]+)\*\*/g, '$1')
-                                .replace(/\*([^*]+)\*/g, '$1')
-                                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-
-                            addText(`${bullet} ${itemText}`, {
-                                size: 10,
-                                indent: 10,
-                                spacing: 2
-                            });
-                        });
-                        cursorY += 4; // Espaçamento após lista
-                        break;
-                        
-                    case 'hr':
-                        // Ignorar separadores --- do markdown para layout mais limpo
-                        cursorY += 4;
-                        break;
-                        
-                    case 'blockquote':
-                        addText(token.text, { 
-                            size: 10, 
-                            style: 'italic', 
-                            indent: 20, 
-                            spacing: 10 
-                        });
-                        break;
-                        
-                    case 'space':
-                        cursorY += 6; // Espaçamento para quebras de linha
-                        break;
-                        
-                    default:
-                        if (token.text && token.text.trim()) {
-                            addText(token.text, { size: 10, spacing: 8 });
-                        }
-                }
-            };
-
-            // Processar todos os tokens
-            let isFirstToken = true;
-            tokens.forEach(token => {
-                processToken(token, isFirstToken);
-                // Só o primeiro token de cabeçalho principal não tem separador
-                if (isFirstToken && token.type === 'heading' && token.depth <= 2) {
-                    isFirstToken = false;
-                }
-            });
-
-            // Adicionar rodapé na última página após processar todo o conteúdo
-            addFooter();
-
-            doc.save(fileName);
+                doc.save(fileName);
+            } catch (error) {
+                console.error('Erro ao gerar PDF:', error);
+                showError('Erro ao gerar PDF', `Não foi possível gerar o PDF: ${error.message}`);
+            } finally {
+                tempContainer.remove();
+            }
         }
 
         /**
