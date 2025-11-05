@@ -1,0 +1,62 @@
+            const doc = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 40;
+            const ptToPx = (pt) => pt * (96 / 72);
+            const contentWidthPt = pageWidth - margin * 2;
+            const contentWidthPx = ptToPx(contentWidthPt);
+
+            const processedHtml = processMarkdown(optimizedMarkdown);
+            const sanitizedHtml = DOMPurify.sanitize(processedHtml);
+
+            const tempContainer = document.createElement('div');
+            tempContainer.id = 'pdf-temp-container';
+            tempContainer.style.position = 'fixed';
+            tempContainer.style.left = '-10000px';
+            tempContainer.style.top = '0';
+            tempContainer.style.width = `${contentWidthPx}px`;
+            tempContainer.style.padding = '0';
+            tempContainer.style.backgroundColor = '#ffffff';
+            tempContainer.style.color = '#1a202c';
+            tempContainer.style.fontFamily = getComputedStyle(document.body).fontFamily;
+            tempContainer.classList.add('prose-output');
+            tempContainer.innerHTML = sanitizedHtml;
+
+            document.body.appendChild(tempContainer);
+
+            try {
+                await doc.html(tempContainer, {
+                    x: margin,
+                    y: margin,
+                    width: contentWidthPt,
+                    windowWidth: tempContainer.scrollWidth,
+                    html2canvas: {
+                        scale: 0.75,
+                        useCORS: true,
+                        allowTaint: false,
+                        backgroundColor: '#ffffff'
+                    },
+                    autoPaging: 'text'
+                });
+
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('pt-BR');
+                const footerText = `Gerado em ${dateStr} - ResumeAI Pro`;
+
+                doc.setFont('Helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.setTextColor(120, 120, 120);
+
+                const totalPages = doc.getNumberOfPages();
+                for (let i = 1; i <= totalPages; i++) {
+                    doc.setPage(i);
+                    doc.text(footerText, pageWidth / 2, pageHeight - 20, { align: 'center' });
+                }
+
+                doc.save(fileName);
+            } catch (error) {
+                console.error('Erro ao gerar PDF:', error);
+                showError('Erro ao gerar PDF', `N├úo foi poss├¡vel gerar o PDF: ${error.message}`);
+            } finally {
+                tempContainer.remove();
+            }

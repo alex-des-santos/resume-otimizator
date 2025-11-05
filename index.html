@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22></text></svg>">
     <!-- CSP mais permissivo para desenvolvimento, mas ainda seguro -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https:; connect-src 'self' https://generativelanguage.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://i.clarity.ms; img-src 'self' data: blob: https://c.clarity.ms https://c.bing.com; worker-src 'self' blob: https:; script-src 'self' 'unsafe-inline' https:; object-src 'none';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https:; connect-src 'self' https://generativelanguage.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://i.clarity.ms https://k.clarity.ms; img-src 'self' data: blob: https://c.clarity.ms https://c.bing.com; worker-src 'self' blob: https:; script-src 'self' 'unsafe-inline' https:; object-src 'none';">
     <title>ResumeAI Pro - Otimizador de Currículo Inteligente</title>
     <!-- Tailwind CSS - Versão CDN que funciona localmente -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" crossorigin="anonymous">
@@ -351,10 +351,10 @@
                             </svg>
                         </div>
                         <div class="flex-1">
-                            <label for="apiKey" class="block text-sm font-semibold text-gray-800 mb-2">🔑 Chave de API do Google AI Studio</label>
+                            <label for="apiKey" class="block text-sm font-semibold text-gray-800 mb-2">Chave de API do Google AI Studio</label>
                             <input type="password" id="apiKey" class="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition shadow-sm" placeholder="Digite sua chave de API aqui...">
                             <div class="mt-3">
-                                <p class="text-xs text-gray-600 mb-2"><strong>🛡️ 100% Seguro:</strong> Sua chave é processada localmente e nunca armazenada.</p>
+                                <p class="text-xs text-gray-600 mb-2"><strong>100% Seguro:</strong> Sua chave &eacute; processada localmente e nunca armazenada.</p>
                                 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-xs text-indigo-600 hover:text-indigo-800 font-medium transition">
                                     <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path>
@@ -449,7 +449,7 @@ Bacharelado em Ciência da Computação - Universidade ABC (2018-2021)
 
 HABILIDADES
 React, JavaScript, TypeScript, HTML, CSS, Git"></textarea>
-                        <p class="text-xs text-gray-500 mt-1">💡 Dica: Inclua experiências, formação, habilidades e informações de contato</p>
+                        <p class="text-xs text-gray-500 mt-1"> Dica: Inclua experiências, formação, habilidades e informações de contato</p>
                     </div>
                 </div>
 
@@ -466,7 +466,7 @@ React, JavaScript, TypeScript, HTML, CSS, Git"></textarea>
                             <input type="radio" id="languagePt" name="resumeLanguage" value="pt-br" class="sr-only" checked>
                             <div class="language-option w-full px-4 py-3 bg-indigo-100 border-2 border-indigo-500 rounded-lg text-center transition-all duration-200 hover:bg-indigo-200">
                                 <div class="flex items-center justify-center gap-2">
-                                    <span class="text-2xl">🇧🇷</span>
+                                    <span class="text-2xl"></span>
                                     <span class="font-medium text-indigo-800">Português</span>
                                 </div>
                             </div>
@@ -475,7 +475,7 @@ React, JavaScript, TypeScript, HTML, CSS, Git"></textarea>
                             <input type="radio" id="languageEn" name="resumeLanguage" value="en" class="sr-only">
                             <div class="language-option w-full px-4 py-3 bg-gray-100 border-2 border-gray-300 rounded-lg text-center transition-all duration-200 hover:bg-gray-200">
                                 <div class="flex items-center justify-center gap-2">
-                                    <span class="text-2xl">🇺🇸</span>
+                                    <span class="text-2xl"></span>
                                     <span class="font-medium text-gray-600">English</span>
                                 </div>
                             </div>
@@ -485,7 +485,7 @@ React, JavaScript, TypeScript, HTML, CSS, Git"></textarea>
 
                 <button id="generateButton" class="w-full mt-auto gradient-button text-white font-bold py-4 px-6 rounded-xl hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300 ease-in-out flex items-center justify-center text-lg pro-shadow">
                     <svg id="loader" class="animate-spin -ml-1 mr-3 h-6 w-6 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    <span id="buttonText">🚀 Gerar Currículo Otimizado</span>
+                    <span id="buttonText"> Gerar Currículo Otimizado</span>
                 </button>
             </div>
 
@@ -530,19 +530,19 @@ React, JavaScript, TypeScript, HTML, CSS, Git"></textarea>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <button id="coverLetterButton" class="feature-btn feature-card" disabled>
-                            <div class="feature-icon mb-2">📝</div>
+                            <div class="feature-icon mb-2"></div>
                             <span class="font-semibold">Carta de Apresentação</span>
                         </button>
                         <button id="linkedinButton" class="feature-btn feature-card" disabled>
-                            <div class="feature-icon mb-2">💼</div>
+                            <div class="feature-icon mb-2"></div>
                             <span class="font-semibold">Otimizar LinkedIn</span>
                         </button>
                         <button id="atsScoreButton" class="feature-btn feature-card" disabled>
-                            <div class="feature-icon mb-2">📊</div>
+                            <div class="feature-icon mb-2"></div>
                             <span class="font-semibold">Score ATS</span>
                         </button>
                         <button id="analyzeButton" class="feature-btn feature-card" disabled>
-                            <div class="feature-icon mb-2">🎯</div>
+                            <div class="feature-icon mb-2"></div>
                             <span class="font-semibold">Análise Completa</span>
                         </button>
                         <button id="questionsButton" class="feature-btn feature-card" disabled>
@@ -550,7 +550,7 @@ React, JavaScript, TypeScript, HTML, CSS, Git"></textarea>
                             <span class="font-semibold">Perguntas de Entrevista</span>
                         </button>
                         <button id="pitchButton" class="feature-btn feature-card" disabled>
-                            <div class="feature-icon mb-2">🎤</div>
+                            <div class="feature-icon mb-2"></div>
                             <span class="font-semibold">Pitch Pessoal</span>
                         </button>
                         <button id="starButton" class="feature-btn feature-card" disabled>
@@ -558,15 +558,15 @@ React, JavaScript, TypeScript, HTML, CSS, Git"></textarea>
                             <span class="font-semibold">Método STAR</span>
                         </button>
                         <button id="summaryButton" class="feature-btn feature-card" disabled>
-                            <div class="feature-icon mb-2">📊</div>
+                            <div class="feature-icon mb-2"></div>
                             <span class="font-semibold">Resumo Qualificações</span>
                         </button>
                         <button id="salaryButton" class="feature-btn feature-card" disabled>
-                            <div class="feature-icon mb-2">💰</div>
+                            <div class="feature-icon mb-2"></div>
                             <span class="font-semibold">CLT vs PJ</span>
                         </button>
                         <button id="followupButton" class="feature-btn feature-card md:col-span-2 lg:col-span-3" disabled>
-                            <div class="feature-icon mb-2">📧</div>
+                            <div class="feature-icon mb-2"></div>
                             <span class="font-semibold">E-mail de Follow-up Profissional</span>
                         </button>
                     </div>
@@ -1152,7 +1152,7 @@ A descrição da vaga foi extraída automaticamente do LinkedIn e já está pree
                 // Mostrar instruções de fallback
                 setTimeout(() => {
                     showContentModal(
-                        "📋 Instruções para Cópia Manual",
+                        " Instruções para Cópia Manual",
                         `## A extração automática não funcionou, mas você pode copiar manualmente:
 
 1. **Na nova aba que se abriu:**
@@ -1630,7 +1630,7 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                             
                             // Mostrar progresso ao usuário
                             if (typeof showTemporaryMessage === 'function') {
-                                showTemporaryMessage(`🔄 API ocupada. Tentativa ${attempt}/${maxRetries}... Aguardando ${Math.round(waitTime/1000)}s`);
+                                showTemporaryMessage(` API ocupada. Tentativa ${attempt}/${maxRetries}... Aguardando ${Math.round(waitTime/1000)}s`);
                             }
                             
                             await new Promise(resolve => setTimeout(resolve, waitTime));
@@ -1639,7 +1639,7 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                         
                         // Melhorar mensagem para usuário final
                         if (isOverloadError) {
-                            throw new Error('🔥 A API do Google está muito ocupada no momento. Aguarde alguns minutos e tente novamente. Este erro é temporário e comum em horários de pico.');
+                            throw new Error(' A API do Google está muito ocupada no momento. Aguarde alguns minutos e tente novamente. Este erro é temporário e comum em horários de pico.');
                         }
                         
                         throw new Error(errorMessage);
@@ -1667,12 +1667,12 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                             
                             // Mostrar progresso ao usuário
                             if (typeof showTemporaryMessage === 'function') {
-                                showTemporaryMessage(`⏱️ Timeout. Tentativa ${attempt}/${maxRetries}...`);
+                                showTemporaryMessage(`⏱ Timeout. Tentativa ${attempt}/${maxRetries}...`);
                             }
                             
                             continue;
                         }
-                        throw new Error('⏱️ Timeout na conexão. A API está respondendo lentamente. Tente novamente em alguns minutos.');
+                        throw new Error('⏱ Timeout na conexão. A API está respondendo lentamente. Tente novamente em alguns minutos.');
                     }
                     
                     // Se não for um erro retryable, lançar imediatamente
@@ -1691,7 +1691,7 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                     
                     // Mostrar progresso ao usuário
                     if (typeof showTemporaryMessage === 'function') {
-                        showTemporaryMessage(`🔄 Erro temporário. Tentativa ${attempt}/${maxRetries}... Aguardando ${Math.round(waitTime/1000)}s`);
+                        showTemporaryMessage(` Erro temporário. Tentativa ${attempt}/${maxRetries}... Aguardando ${Math.round(waitTime/1000)}s`);
                     }
                     
                     await new Promise(resolve => setTimeout(resolve, waitTime));
@@ -1700,84 +1700,110 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                 }
                     async function downloadAsPdf() {
             if (!optimizedMarkdown) {
-                showError('Nenhum Conteúdo', 'Não há currículo gerado para baixar.');
+                showError('Nenhum Conteudo', 'Nao ha curriculo gerado para baixar.');
                 return;
             }
 
-            // Gerar nome do arquivo
             let fileName = pdfFileNameInput.value.trim();
             if (!fileName) {
                 fileName = generateFileNameFromJobDescription();
             }
 
-            // Garantir que termine com .pdf
-            if (!fileName.endsWith('.pdf')) {
+            if (!fileName.toLowerCase().endsWith('.pdf')) {
                 fileName += '.pdf';
             }
 
-            const doc = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight();
-            const margin = 40;
-            const ptToPx = (pt) => pt * (96 / 72);
-            const contentWidthPt = pageWidth - margin * 2;
-            const contentWidthPx = ptToPx(contentWidthPt);
+            const popup = window.open('', '_blank');
+            if (!popup) {
+                showError('Popup bloqueado', 'Permita popups para baixar o PDF.');
+                return;
+            }
 
-            const processedHtml = processMarkdown(optimizedMarkdown);
-            const sanitizedHtml = DOMPurify.sanitize(processedHtml);
+            const printableHtml = DOMPurify.sanitize(processMarkdown(optimizedMarkdown));
+            const safeTitle = fileName.replace(/[\n\r\t\f\v]+/g, '_');
 
-            const tempContainer = document.createElement('div');
-            tempContainer.id = 'pdf-temp-container';
-            tempContainer.style.position = 'fixed';
-            tempContainer.style.left = '-10000px';
-            tempContainer.style.top = '0';
-            tempContainer.style.width = `${contentWidthPx}px`;
-            tempContainer.style.padding = '0';
-            tempContainer.style.backgroundColor = '#ffffff';
-            tempContainer.style.color = '#1a202c';
-            tempContainer.style.fontFamily = getComputedStyle(document.body).fontFamily;
-            tempContainer.classList.add('prose-output');
-            tempContainer.innerHTML = sanitizedHtml;
+            const template = `<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${safeTitle}</title>
+  <style>
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      margin: 32px;
+      color: #1f2937;
+      line-height: 1.6;
+      background: #ffffff;
+    }
+    h1, h2, h3, h4 {
+      color: #111827;
+      margin-top: 24px;
+      margin-bottom: 12px;
+    }
+    h1 { font-size: 26px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+    h2 { font-size: 22px; }
+    h3 { font-size: 18px; }
+    h4 { font-size: 16px; }
+    p { margin-bottom: 12px; }
+    ul { padding-left: 24px; margin-bottom: 12px; }
+    li { margin-bottom: 6px; }
+    strong { color: #111827; }
+    em { color: #4b5563; }
+    hr { border: none; height: 2px; background: linear-gradient(to right, #cbd5f5, #e5e7eb, #cbd5f5); margin: 24px 0; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .print-actions { margin-top: 24px; }
+    .btn-print {
+      padding: 10px 16px;
+      background: #4f46e5;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-print:hover { background: #4338ca; }
+    @media print {
+      .print-actions { display: none; }
+      body { margin: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">${printableHtml}</div>
+  <div class="print-actions">
+    <button id="printTrigger" class="btn-print">Imprimir / Salvar PDF</button>
+  </div>
+</body>
+</html>`;
 
-            document.body.appendChild(tempContainer);
+            popup.document.open();
+            popup.document.write(template);
+            popup.document.close();
+            popup.document.title = safeTitle;
 
-            try {
-                await doc.html(tempContainer, {
-                    x: margin,
-                    y: margin,
-                    width: contentWidthPt,
-                    windowWidth: tempContainer.scrollWidth,
-                    html2canvas: {
-                        scale: 0.75,
-                        useCORS: true,
-                        allowTaint: false,
-                        backgroundColor: '#ffffff'
-                    },
-                    autoPaging: 'text'
-                });
+            const triggerPrint = () => {
+                if (popup.closed) return;
+                popup.focus();
+                try { popup.print(); } catch (err) { console.error(err); }
+            };
 
-                const now = new Date();
-                const dateStr = now.toLocaleDateString('pt-BR');
-                const footerText = `Gerado em ${dateStr} - ResumeAI Pro`;
-
-                doc.setFont('Helvetica', 'normal');
-                doc.setFontSize(9);
-                doc.setTextColor(120, 120, 120);
-
-                const totalPages = doc.getNumberOfPages();
-                for (let i = 1; i <= totalPages; i++) {
-                    doc.setPage(i);
-                    doc.text(footerText, pageWidth / 2, pageHeight - 20, { align: 'center' });
+            const wirePrint = () => {
+                if (popup.closed) return;
+                const button = popup.document.getElementById('printTrigger');
+                if (button) {
+                    button.addEventListener('click', triggerPrint);
                 }
+                triggerPrint();
+            };
 
-                doc.save(fileName);
-            } catch (error) {
-                console.error('Erro ao gerar PDF:', error);
-                showError('Erro ao gerar PDF', `Não foi possível gerar o PDF: ${error.message}`);
-            } finally {
-                tempContainer.remove();
+            if (popup.document.readyState === 'complete') {
+                setTimeout(wirePrint, 0);
+            } else {
+                popup.addEventListener('load', () => setTimeout(wirePrint, 0), { once: true });
             }
         }
+
 
         /**
          * Selects and builds the correct prompt for the desired feature.
@@ -1814,9 +1840,9 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                 case 'optimize':
                     return baseOptimizePrompt;
                 case 'atsScore':
-                    return `[Persona] Especialista em ATS (Applicant Tracking Systems). [Contexto] Calcular score de aderência entre currículo e vaga. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Original:\n\`\`\`${originalResume}\`\`\`\n\nCurrículo Otimizado:\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Compare os currículos e calcule:\n\n## 📊 Score ATS\n\n### Currículo Original: [X]%\n- Palavras-chave encontradas: X/Y\n- Habilidades técnicas: X/Y\n- Experiência relevante: X/Y\n\n### Currículo Otimizado: [Z]%\n- Palavras-chave encontradas: X/Y\n- Habilidades técnicas: X/Y\n- Experiência relevante: X/Y\n\n### 🎯 Melhoria: +[diferença]%\n\n## Detalhamento\n\n### ✅ Palavras-chave Identificadas\n[Lista das principais palavras-chave da vaga encontradas]\n\n### ⚠️ Palavras-chave Ausentes\n[Lista das palavras-chave importantes que ainda faltam]\n\n### 💡 Recomendações\n[3-5 sugestões específicas para melhorar ainda mais o score]\n\n${langInstruction} [Formato da Saída] Markdown.`;
+                    return `[Persona] Especialista em ATS (Applicant Tracking Systems). [Contexto] Calcular score de aderência entre currículo e vaga. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Original:\n\`\`\`${originalResume}\`\`\`\n\nCurrículo Otimizado:\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Compare os currículos e calcule:\n\n##  Score ATS\n\n### Currículo Original: [X]%\n- Palavras-chave encontradas: X/Y\n- Habilidades técnicas: X/Y\n- Experiência relevante: X/Y\n\n### Currículo Otimizado: [Z]%\n- Palavras-chave encontradas: X/Y\n- Habilidades técnicas: X/Y\n- Experiência relevante: X/Y\n\n###  Melhoria: +[diferença]%\n\n## Detalhamento\n\n### ✅ Palavras-chave Identificadas\n[Lista das principais palavras-chave da vaga encontradas]\n\n### ⚠ Palavras-chave Ausentes\n[Lista das palavras-chave importantes que ainda faltam]\n\n###  Recomendações\n[3-5 sugestões específicas para melhorar ainda mais o score]\n\n${langInstruction} [Formato da Saída] Markdown.`;
                 case 'analyze':
-                    return `[Persona] Coach de Carreira sênior e analista. [Contexto] Análise completa do currículo otimizado. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Forneça análise detalhada em 4 seções:\n\n## 🎯 Pontos Fortes\n[Destaque os elementos mais alinhados com a vaga]\n\n## 🔧 Pontos a Melhorar\n[Sugestões construtivas e específicas]\n\n## 🚀 Diferenciais Competitivos\n[O que torna este perfil único para a vaga]\n\n## 📈 Próximos Passos\n[Ações concretas para fortalecer a candidatura]\n\n${langInstruction} [Formato da Saída] Markdown com cabeçalhos.`;
+                    return `[Persona] Coach de Carreira sênior e analista. [Contexto] Análise completa do currículo otimizado. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Forneça análise detalhada em 4 seções:\n\n##  Pontos Fortes\n[Destaque os elementos mais alinhados com a vaga]\n\n##  Pontos a Melhorar\n[Sugestões construtivas e específicas]\n\n##  Diferenciais Competitivos\n[O que torna este perfil único para a vaga]\n\n##  Próximos Passos\n[Ações concretas para fortalecer a candidatura]\n\n${langInstruction} [Formato da Saída] Markdown com cabeçalhos.`;
                 case 'questions':
                     return `[Persona] Gerente de Contratação experiente. [Contexto] Preparar para entrevista. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo do Candidato (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Crie duas listas: "Perguntas que o Entrevistador Pode Fazer" e "Perguntas Inteligentes para Você Fazer". ${langInstruction} [Formato da Saída] Markdown com cabeçalhos.`;
                 case 'coverLetter':
@@ -1830,18 +1856,18 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
                     return `[Persona] Coach de Entrevistas Comportamentais. [Contexto] Estruturar experiências usando o método STAR (Situação, Tarefa, Ação, Resultado). [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Selecione as 2 experiências profissionais mais relevantes do currículo. Para cada uma, estruture-a no formato STAR: **Situação:** (O contexto/desafio), **Tarefa:** (Sua responsabilidade), **Ação:** (O que você fez), **Resultado:** (O impacto quantificado). ${langInstruction} [Formato da Saída] Markdown com cabeçalhos claros para cada história e para S, T, A, R.`;                case 'salary':
                     return `[Persona] Consultor de Remuneração especialista no mercado brasileiro. [Contexto] Calcular pretensão salarial para CLT e PJ de forma prática e objetiva. [Entradas]\nDescrição da Vaga:\n\`\`\`${jobDesc}\`\`\`\n\nCurrículo Otimizado (Markdown):\n\`\`\`${markdown}\`\`\`\n\n[Instruções] Forneça uma análise concisa e prática seguindo exatamente esta estrutura:
 
-## 📊 ANÁLISE DA VAGA
+##  ANÁLISE DA VAGA
 - **Nível:** (Júnior/Pleno/Sênior/Especialista)
 - **Setor:** (identifique o setor)
 - **Localização:** (infira: SP/RJ/Remoto/Nacional)
 - **Porte da empresa:** (Startup/Média/Grande)
 
-## 👤 SEU PERFIL
+##  SEU PERFIL
 - **Experiência relevante:** X anos
 - **Match com a vaga:** (Alto/Médio/Baixo) - justifique brevemente
 - **Diferencial:** (principal ponto forte para esta vaga)
 
-## 💰 VALORES SUGERIDOS
+##  VALORES SUGERIDOS
 
 ### CLT
 - **Salário bruto:** R$ X.XXX a R$ X.XXX
@@ -1853,11 +1879,11 @@ Depois de colar o texto, você pode editá-lo se necessário antes de gerar o cu
 - **Faturamento mensal:** R$ X.XXX
 - **Líquido estimado:** ~R$ X.XXX (descontando impostos simples)
 
-## 🎯 RECOMENDAÇÃO
+##  RECOMENDAÇÃO
 **Modalidade mais vantajosa:** [CLT/PJ/Equivalente]
 **Justificativa:** (1-2 frases explicando o porquê)
 
-## 💬 COMO NEGOCIAR
+##  COMO NEGOCIAR
 ### Se perguntarem sua pretensão:
 - **CLT:** "Estou buscando algo entre R$ X.XXX e R$ X.XXX, dependendo do pacote de benefícios"
 - **PJ:** "Meu valor/hora é R$ XXX, que dá aproximadamente R$ X.XXX mensais"
